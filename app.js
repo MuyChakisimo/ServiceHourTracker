@@ -13,7 +13,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const setGoalsBtn = document.getElementById('set-goals-btn');
     const planScheduleBtn = document.getElementById('plan-schedule-btn');
     const viewMedalsBtn = document.getElementById('view-medals-btn');
-    const shareBtn = document.getElementById('share-btn');
+    const shareOptionBtn = document.getElementById('share-option-btn');
+    const sharePanel = document.getElementById('share-panel');
+    const shareWithFriendBtn = document.getElementById('share-with-friend-btn');
+    const shareBackBtn = document.getElementById('share-back-btn');
     
     const schedulePanel = document.getElementById('schedule-panel');
     const scheduleCancelBtn = document.getElementById('schedule-cancel-btn');
@@ -305,6 +308,31 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.classList.remove('options-open');
     }
 
+    function openSharePanel() {
+        closeOptionsPanel(); // Close the main options to show the share panel
+        sharePanel.classList.add('visible');
+    }
+
+    function closeSharePanel() {
+        sharePanel.classList.remove('visible');
+        openOptionsPanel(); // Go back to the main options panel
+    }
+
+    function shareApp() {
+        if (navigator.share) { // Checks if the browser supports the Share API
+            navigator.share({
+                title: 'Service Time Tracker',
+                text: 'Check out this app for tracking service time!',
+                url: 'https://muychakisimo.github.io/ServiceHourTracker/'
+            })
+            .then(() => console.log('Successful share'))
+            .catch((error) => console.log('Error sharing', error));
+        } else {
+            // Fallback for browsers that don't support it
+            openAlertModal('Share feature not supported on this browser.');
+        }
+    }
+
     // --- SCHEDULE PANEL FUNCTIONS ---
     function openSchedulePanel() {
         for (let i = 0; i < 7; i++) {
@@ -388,7 +416,9 @@ document.addEventListener('DOMContentLoaded', () => {
     goalCancelBtn.addEventListener('click', closeGoalPanel);
     goalSaveBtn.addEventListener('click', saveGoals);
     viewMedalsBtn.addEventListener('click', () => openAlertModal('Coming Soon!'));
-    shareBtn.addEventListener('click', () => openAlertModal('Coming Soon!'));
+    shareOptionBtn.addEventListener('click', openSharePanel);
+    shareWithFriendBtn.addEventListener('click', shareApp);
+    shareBackBtn.addEventListener('click', closeSharePanel);
     alertOkBtn.addEventListener('click', closeAlertModal);
     setGoalsBtn.addEventListener('click', openGoalPanel);
 
