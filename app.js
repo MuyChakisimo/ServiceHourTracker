@@ -286,6 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- DATA ENTRY MODAL FUNCTIONS ---
+    document.body.classList.add('modal-open');
     function openModal(dateKey) {
         currentlyEditingDate = dateKey;
         const existingEntry = database[dateKey] || {};
@@ -311,6 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
         timeHoursInput.focus();
     }
 
+    document.body.classList.remove('modal-open');
     function closeModal() {
         modal.classList.remove('visible');
         currentlyEditingDate = null;

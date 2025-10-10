@@ -378,7 +378,7 @@ label.options-btn {
     position: absolute;
     bottom: 1rem;
     right: 1.5rem;
-    color: var(--border-color);
+    color: white;
     font-size: 0.8rem;
 }
 
@@ -411,6 +411,11 @@ label.options-btn {
     width: 90%;
     max-width: 400px;
     border: 1px solid var(--border-color);
+}
+
+body.modal-open {
+    position: fixed;
+    width: 100%;
 }
 
 .modal-body .form-group {
@@ -609,9 +614,17 @@ label.options-btn {
     padding: 1rem 2rem;
 }
 
+/* Rule 1: For the compact "Plan a Schedule" inputs */
 #schedule-panel .time-input-group input {
     width: 45px;
     padding: 0.5rem 0.25rem;
+    font-size: 16px; /* Prevents auto-zoom on mobile */
+}
+
+/* Rule 2: For the wider "Set Goals" inputs */
+#goal-panel .time-input-group input {
+    width: auto;
+    padding: 0.5rem;
     font-size: 16px; /* Prevents auto-zoom on mobile */
 }
 
