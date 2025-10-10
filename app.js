@@ -1,5 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- ELEMENT SELECTORS ---
+    const iosInstallModal = document.getElementById('ios-install-modal');
+    const iosInstallDoneBtn = document.getElementById('ios-install-done-btn');
+
     const installBanner = document.getElementById('install-banner');
     const installBtn = document.getElementById('install-btn');
     const closeInstallBannerBtn = document.getElementById('close-install-banner-btn');
@@ -363,6 +366,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- EVENT LISTENERS ---
+    iosInstallDoneBtn.addEventListener('click', () => {
+        iosInstallModal.classList.remove('visible');
+        localStorage.setItem('hasSeenIosInstallPrompt', 'true');
+    });
+
     installBtn.addEventListener('click', (e) => {
         installBanner.classList.remove('visible'); // Hide our banner
         deferredPrompt.prompt(); // Show the browser's install prompt
@@ -408,6 +416,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- INITIALIZATION ---
+    // --- iOS INSTALL PROMPT LOGIC ---
+    const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isInStandaloneMode = () => ('standalone' in window.navigator) && (window.navigator.standalone);
+
+    // If the user is on iOS, not in standalone mode, and has not seen the prompt before
+    if (isIOS() && !isInStandaloneMode() && !localStorage.getItem('hasSeenIosInstallPrompt')) {
+        iosInstallModal.classList.add('visible');
+    }
+    
     renderCalendar();
 
     // PWA: SERVICE WORKER REGISTRATION

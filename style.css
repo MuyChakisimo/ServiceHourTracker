@@ -455,6 +455,22 @@ footer {
     opacity: 0.8;
 }
 
+.ios-install-message {
+    text-align: center;
+    font-size: 1.1rem;
+    line-height: 1.5;
+    margin: 0 0 2rem 0;
+}
+
+#ios-install-done-btn {
+    background-color: var(--primary-purple);
+    color: white;
+    width: 100px;
+}
+#ios-install-done-btn:hover {
+    opacity: 0.8;
+}
+
 /* --- SCHEDULE & GOAL PANEL STYLES --- */
 .panel {
     position: fixed;
