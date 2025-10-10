@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Time Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#5a189a"/>
+</head>
+<body>
+    <nav id="options-panel">
+        <button id="options-close-btn" class="icon-btn">✕</button>
+        <h2>Options</h2>
+        <button class="options-btn" id="set-goals-btn">Set Goals</button>
+        <button class="options-btn" id="plan-schedule-btn">Plan a Schedule</button>
+        <button class="options-btn" id="view-medals-btn">View Medals</button>
+        <button class="options-btn" id="share-btn">Share</button>
+        <div class="version-number">Created by Omar Rivas V.1.0</div>
+    </nav>
+
+    <div id="main-content">
+        <div class="container">
+            <header>
+                <button class="icon-btn" id="options-btn">☰</button>
+                <div class="month-display">
+                    <button class="nav-btn" id="prev-month-btn">◀</button>
+                    <h1 id="current-month-year">October 2025</h1>
+                    <button class="nav-btn" id="next-month-btn">▶</button>
+                </div>
+                <div class="header-spacer"></div> 
+            </header>
+
+            <main>
+                <div id="calendar-weekdays">
+                    <div>Sun</div><div>Mon</div><div>Tue</div>
+                    <div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                </div>
+                <div id="calendar-grid"></div>
+            </main>
+
+            <footer>
+                <div class="summary-grid">
+                    <div class="summary-box">
+                        <h3>This Month</h3>
+                        <p>⏱️ Total: <span id="month-total-hours">0</span></p>
+                        <p>🧑‍🏫 Studies: <span id="month-total-studies">0</span></p>
+                        <hr>
+                        <p>🎯 Goal: <span id="month-goal">0</span>h</p>
+                        <p>⏳ Left: <span id="month-time-left">0</span></p> 
+                        <p>📈: <span id="month-percent">0</span>% Complete</p>
+                    </div>
+                    <div class="summary-box">
+                        <h3>Service Year</h3>
+                        <p class="service-year-dates">(Sep. 1st - Aug. 31st)</p>
+                        <p>🎯 Goal: <span id="year-goal">0</span>h</p>
+                        <p>⏱️ Total: <span id="year-accumulated-hours">0</span></p>
+                        <p>⏳ Left: <span id="year-remaining-hours">0</span></p>
+                        <p>📈: <span id="year-percent">0.0</span>% Complete</p>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <div id="entry-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 id="modal-title">Enter Details for a Date</h2>
+            <div class="modal-body">
+                <div class="input-group">
+                    <div class="form-group">
+                        <label>Time</label>
+                        <div class="time-input-group">
+                            <input type="text" inputmode="numeric" id="time-hours-input" placeholder="Hours">
+                            <span>h</span>
+                            <input type="text" inputmode="numeric" id="time-minutes-input" placeholder="Mins">
+                            <span>min</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="studies-input"># of Studies</label>
+                        <input type="text" inputmode="numeric" id="studies-input">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="notes-input">Notes</label>
+                    <textarea id="notes-input" rows="4"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="modal-close-btn">Cancel</button>
+                <button id="modal-save-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="schedule-panel" class="panel">
+        <div class="panel-header">
+            <h2>Plan Your Weekly Schedule</h2>
+        </div>
+        <div class="panel-body schedule-body">
+            <div class="schedule-row">
+                <label><input type="checkbox" class="schedule-day-checkbox" data-day="0"> Sunday</label>
+                <div class="time-input-group">
+                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="0" placeholder="H"><span>h</span>
+                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="0" placeholder="M"><span>min</span>
+                </div>
+            </div>
+            <div class="schedule-row">
+                <label><input type="checkbox" class="schedule-day-checkbox" data-day="1"> Monday</label>
+                <div class="time-input-group">
+                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="1" placeholder="H"><span>h</span>
+                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="1" placeholder="M"><span>min</span>
+                </div>
+            </div>
+            <div class="schedule-row">
+                <label><input type="checkbox" class="schedule-day-checkbox" data-day="2"> Tuesday</label>
+                <div class="time-input-group">
+                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="2" placeholder="H"><span>h</span>
+                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="2" placeholder="M"><span>min</span>
+                </div>
+            </div>
+            <div class="schedule-row">
+                <label><input type="checkbox" class="schedule-day-checkbox" data-day="3"> Wednesday</label>
+                <div class="time-input-group">
+                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="3" placeholder="H"><span>h</span>
+                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="3" placeholder="M"><span>min</span>
+                </div>
+            </div>
+            <div class="schedule-row">
+                <label><input type="checkbox" class="schedule-day-checkbox" data-day="4"> Thursday</label>
+                <div class="time-input-group">
+                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="4" placeholder="H"><span>h</span>
+                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="4" placeholder="M"><span>min</span>
+                </div>
+            </div>
+            <div class="schedule-row">
+                <label><input type="checkbox" class="schedule-day-checkbox" data-day="5"> Friday</label>
+                <div class="time-input-group">
+                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="5" placeholder="H"><span>h</span>
+                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="5" placeholder="M"><span>min</span>
+                </div>
+            </div>
+            <div class="schedule-row">
+                <label><input type="checkbox" class="schedule-day-checkbox" data-day="6"> Saturday</label>
+                <div class="time-input-group">
+                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="6" placeholder="H"><span>h</span>
+                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="6" placeholder="M"><span>min</span>
+                </div>
+            </div>
+        </div>
+        <div class="panel-footer">
+            <button id="schedule-cancel-btn">Cancel</button>
+            <button id="schedule-save-btn">Save Schedule</button>
+        </div>
+    </div>
+
+    <div id="goal-panel" class="panel">
+        <div class="panel-header">
+            <h2 id="goal-panel-title">Set your goal for:</h2>
+        </div>
+        <div class="panel-body">
+            <div class="goal-row">
+                <label for="monthly-goal-input">the Month:</label>
+                <div class="time-input-group">
+                    <input type="number" inputmode="numeric" id="monthly-goal-input">
+                    <span>h</span>
+                </div>
+            </div>
+            <div class="goal-row">
+                <label for="yearly-goal-input">the Year:</label>
+                <div class="time-input-group">
+                    <input type="number" inputmode="numeric" id="yearly-goal-input">
+                    <span>h</span>
+                </div>
+            </div>
+        </div>
+        <div class="panel-footer">
+            <button id="goal-cancel-btn">Cancel</button>
+            <button id="goal-save-btn">Save Goals</button>
+        </div>
+    </div>
+
+    <div id="alert-modal" class="modal-overlay">
+        <div class="modal-content">
+            <p id="alert-message">Message Here</p>
+            <div class="modal-footer" style="justify-content: center;">
+                <button id="alert-ok-btn">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

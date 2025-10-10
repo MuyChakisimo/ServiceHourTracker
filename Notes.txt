@@ -1,0 +1,9 @@
+Remove # of publications
+
+Add a PLAN option to mark if goal was met or not and to schedule service time for the month or year
+
+Add option to view dates in calendar style
+
+contact list of study buddies
+
+revisitas info
