@@ -1,5 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- ELEMENT SELECTORS ---
+    const installBanner = document.getElementById('install-banner');
+    const installBtn = document.getElementById('install-btn');
+    const closeInstallBannerBtn = document.getElementById('close-install-banner-btn');
+
     const mainContent = document.getElementById('main-content');
     const optionsBtn = document.getElementById('options-btn');
     const optionsCloseBtn = document.getElementById('options-close-btn');
@@ -53,6 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- STATE & DATABASE ---
+    let deferredPrompt;
     let currentDate = new Date();
     let currentlyEditingDate = null; 
     let database = JSON.parse(localStorage.getItem('serviceTimeTrackerDB')) || {};
@@ -358,6 +363,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- EVENT LISTENERS ---
+    installBtn.addEventListener('click', (e) => {
+        installBanner.classList.remove('visible'); // Hide our banner
+        deferredPrompt.prompt(); // Show the browser's install prompt
+    });
+
+    closeInstallBannerBtn.addEventListener('click', (e) => {
+        installBanner.classList.remove('visible'); // Just hide our banner
+    });
+
     optionsBtn.addEventListener('click', openOptionsPanel);
     optionsCloseBtn.addEventListener('click', closeOptionsPanel);
     planScheduleBtn.addEventListener('click', openSchedulePanel);
@@ -408,4 +422,14 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     });
 }
+
+// --- PWA INSTALL PROMPT LOGIC ---
+    window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent Chrome 67 and earlier from automatically showing the prompt
+        e.preventDefault();
+        // Stash the event so it can be triggered later.
+        deferredPrompt = e;
+        // Show our custom install banner
+        installBanner.classList.add('visible');
+    });
 });

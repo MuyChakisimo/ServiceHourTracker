@@ -169,6 +169,42 @@ main {
 }
 
 /* --- FOOTER SUMMARY STYLES --- */
+/* --- INSTALL BANNER STYLES --- */
+#install-banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: var(--card-bg-color);
+    border-top: 2px solid var(--border-color);
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 900;
+    transform: translateY(150%); /* Start hidden below screen */
+    transition: transform 0.3s ease-in-out;
+}
+
+#install-banner.visible {
+    transform: translateY(0); /* Slide into view */
+}
+
+#install-banner p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+#install-banner #install-btn {
+    background-color: var(--primary-purple);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+
 footer {
     flex-shrink: 0;
     margin-top: 1rem;
