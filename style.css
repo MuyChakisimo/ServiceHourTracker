@@ -297,6 +297,10 @@ footer {
     cursor: pointer;
 }
 
+label.options-btn {
+    cursor: pointer;
+}
+
 .options-btn:hover {
     background-color: var(--border-color);
 }
@@ -505,6 +509,7 @@ footer {
     flex-grow: 1;
     overflow-y: auto;
     padding: 2rem 0;
+    text-align: center;
 }
 
 .schedule-row, .goal-row {
@@ -539,9 +544,16 @@ footer {
     cursor: pointer;
 }
 
+#import-export-panel .options-btn {
+    width: auto;
+    display: inline-block;
+    padding: 1rem 2rem;
+}
+
 #schedule-panel .time-input-group input {
-    width: 50px;
+    width: 45px;
     padding: 0.5rem 0.25rem;
+    font-size: 16px; /* Prevents auto-zoom on mobile */
 }
 
 #goal-cancel-btn, #schedule-cancel-btn {
@@ -551,4 +563,27 @@ footer {
 }
 #goal-cancel-btn:hover, #schedule-cancel-btn:hover {
     background-color: var(--border-color);
+}
+
+/* Media query for screens 768px or wider (tablets and desktops) */
+@media (min-width: 768px) {
+    
+    .container {
+        /* On desktop, don't force the container to be the full screen height */
+        height: auto;
+        max-width: 900px; /* Allow the layout to be a bit wider */
+    }
+
+    body {
+        /* Add some vertical padding to center the content on the page */
+        padding: 2rem 1rem;
+        height: auto; 
+    }
+
+    .calendar-day {
+        /* The default min-height is fine, just add more internal padding */
+        padding: 8px;
+    }
+    
+    /* You can keep any other desktop-specific styles you liked here */
 }

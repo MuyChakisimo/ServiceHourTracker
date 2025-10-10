@@ -1,5 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- ELEMENT SELECTORS ---
+    const importExportBtn = document.getElementById('import-export-btn');
+    const importExportPanel = document.getElementById('import-export-panel');
+    const exportDataBtn = document.getElementById('export-data-btn');
+    const importFileInput = document.getElementById('import-file-input');
+    const importExportBackBtn = document.getElementById('import-export-back-btn');
+
     const iosInstallModal = document.getElementById('ios-install-modal');
     const iosInstallDoneBtn = document.getElementById('ios-install-done-btn');
 
@@ -309,13 +315,70 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function openSharePanel() {
-        closeOptionsPanel(); // Close the main options to show the share panel
         sharePanel.classList.add('visible');
     }
 
     function closeSharePanel() {
         sharePanel.classList.remove('visible');
-        openOptionsPanel(); // Go back to the main options panel
+    }
+
+    function openImportExportPanel() {
+        importExportPanel.classList.add('visible');
+    }
+
+    function closeImportExportPanel() {
+        importExportPanel.classList.remove('visible');
+    }
+
+    function exportData() {
+        const dataToExport = {
+            database: database,
+            settings: settings
+        };
+        const dataStr = JSON.stringify(dataToExport, null, 2);
+        const dataBlob = new Blob([dataStr], {type: "application/json"});
+        const url = URL.createObjectURL(dataBlob);
+        
+        const link = document.createElement('a');
+        link.download = `serviceTimeTracker_backup.json`;
+        link.href = url;
+        link.click();
+        
+        URL.revokeObjectURL(url); // Clean up
+        openAlertModal('Backup file has been downloaded!');
+    }
+
+    function importData(event) {
+        const file = event.target.files[0];
+        if (!file) {
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                // Basic validation
+                if (importedData.database && importedData.settings) {
+                    if (confirm("This will overwrite all current data. Are you sure you want to continue?")) {
+                        database = importedData.database;
+                        settings = importedData.settings;
+                        saveData();
+                        saveSettings();
+                        renderCalendar(); // Refresh the UI
+                        openAlertModal('Data successfully imported!');
+                    }
+                } else {
+                    openAlertModal('Error: Invalid backup file.');
+                }
+            } catch (error) {
+                openAlertModal('Error: Could not read the file. Please make sure it is a valid backup file.');
+            }
+        };
+        reader.readAsText(file);
+        
+        // Reset the file input so you can import the same file again if needed
+        event.target.value = null;
     }
 
     function shareApp() {
@@ -444,6 +507,11 @@ document.addEventListener('DOMContentLoaded', () => {
     modal.addEventListener('click', (event) => {
         if (event.target === modal) closeModal();
     });
+
+    importExportBtn.addEventListener('click', openImportExportPanel);
+    importExportBackBtn.addEventListener('click', closeImportExportPanel);
+    exportDataBtn.addEventListener('click', exportData);
+    importFileInput.addEventListener('change', importData);
 
     // --- INITIALIZATION ---
     // --- iOS INSTALL PROMPT LOGIC ---

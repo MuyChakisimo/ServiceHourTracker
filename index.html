@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Service Time Tracker</title>
@@ -22,7 +23,8 @@
         <button class="options-btn" id="plan-schedule-btn">Plan a Schedule</button>
         <button class="options-btn" id="view-medals-btn">View Medals</button>
         <button class="options-btn" id="share-option-btn">Share Option</button>
-        <div class="version-number">Created by Omar Rivas V.1.0</div>
+        <button class="options-btn" id="import-export-btn">Import / Export Data</button>
+        <div class="version-number">Created by Omar Rivas V.1.1.1</div>
     </nav>
 
     <div id="share-panel" class="panel">
@@ -151,50 +153,50 @@
             <div class="schedule-row">
                 <label><input type="checkbox" class="schedule-day-checkbox" data-day="0"> Sunday</label>
                 <div class="time-input-group">
-                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="0" placeholder="H"><span>h</span>
-                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="0" placeholder="M"><span>min</span>
+                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="0" placeholder=""><span>h</span>
+                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="0" placeholder=""><span>min</span>
                 </div>
             </div>
             <div class="schedule-row">
                 <label><input type="checkbox" class="schedule-day-checkbox" data-day="1"> Monday</label>
                 <div class="time-input-group">
-                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="1" placeholder="H"><span>h</span>
-                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="1" placeholder="M"><span>min</span>
+                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="1" placeholder=""><span>h</span>
+                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="1" placeholder=""><span>min</span>
                 </div>
             </div>
             <div class="schedule-row">
                 <label><input type="checkbox" class="schedule-day-checkbox" data-day="2"> Tuesday</label>
                 <div class="time-input-group">
-                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="2" placeholder="H"><span>h</span>
-                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="2" placeholder="M"><span>min</span>
+                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="2" placeholder=""><span>h</span>
+                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="2" placeholder=""><span>min</span>
                 </div>
             </div>
             <div class="schedule-row">
                 <label><input type="checkbox" class="schedule-day-checkbox" data-day="3"> Wednesday</label>
                 <div class="time-input-group">
-                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="3" placeholder="H"><span>h</span>
-                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="3" placeholder="M"><span>min</span>
+                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="3" placeholder=""><span>h</span>
+                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="3" placeholder=""><span>min</span>
                 </div>
             </div>
             <div class="schedule-row">
                 <label><input type="checkbox" class="schedule-day-checkbox" data-day="4"> Thursday</label>
                 <div class="time-input-group">
-                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="4" placeholder="H"><span>h</span>
-                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="4" placeholder="M"><span>min</span>
+                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="4" placeholder=""><span>h</span>
+                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="4" placeholder=""><span>min</span>
                 </div>
             </div>
             <div class="schedule-row">
                 <label><input type="checkbox" class="schedule-day-checkbox" data-day="5"> Friday</label>
                 <div class="time-input-group">
-                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="5" placeholder="H"><span>h</span>
-                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="5" placeholder="M"><span>min</span>
+                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="5" placeholder=""><span>h</span>
+                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="5" placeholder=""><span>min</span>
                 </div>
             </div>
             <div class="schedule-row">
                 <label><input type="checkbox" class="schedule-day-checkbox" data-day="6"> Saturday</label>
                 <div class="time-input-group">
-                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="6" placeholder="H"><span>h</span>
-                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="6" placeholder="M"><span>min</span>
+                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="6" placeholder=""><span>h</span>
+                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="6" placeholder=""><span>min</span>
                 </div>
             </div>
         </div>
@@ -249,5 +251,20 @@
             </div>
         </div>
     </div>
+
+    <div id="import-export-panel" class="panel">
+        <div class="panel-header">
+            <h2>Import / Export Data</h2>
+        </div>
+        <div class="panel-body">
+            <button class="options-btn" id="export-data-btn">Export Data</button>
+            <label for="import-file-input" class="options-btn">Import Data</label>
+            <input type="file" id="import-file-input" accept=".json" style="display: none;">
+        </div>
+        <div class="panel-footer">
+            <button id="import-export-back-btn">Back</button>
+        </div>
+    </div>
+
 </body>
 </html>
