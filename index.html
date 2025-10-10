@@ -67,8 +67,14 @@
                         <p>🧑‍🏫 Studies: <span id="month-total-studies">0</span></p>
                         <hr>
                         <p>🎯 Goal: <span id="month-goal">0</span>h</p>
-                        <p>⏳ Left: <span id="month-time-left">0</span></p> 
-                        <p>📈: <span id="month-percent">0</span>% Complete</p>
+                        <p>⏳ Left: <span id="month-time-left">0</span></p>
+                        <div class="progress-container">
+                            <div class="progress-bar-track">
+                                <div id="month-progress-bar" class="progress-bar-fill"></div>
+                                <span id="month-progress-text" class="progress-bar-text">0%</span>
+                            </div>
+                            <span id="month-goal-emoji" class="goal-emoji">👍</span>
+                        </div>
                     </div>
                     <div class="summary-box">
                         <h3>Service Year</h3>
@@ -266,5 +272,23 @@
         </div>
     </div>
 
+    <div id="medals-panel" class="panel">
+        <div class="panel-header">
+            <h2>Medal Room</h2>
+        </div>
+        <div class="panel-body">
+            <div class="medals-list-header">
+                <div>Medal</div>
+                <div>Description</div>
+                <div>Collected</div>
+            </div>
+            <div id="medals-list-container">
+                </div>
+        </div>
+        <div class="panel-footer">
+            <button id="medals-back-btn">Back</button>
+        </div>
+    </div>
+    
 </body>
 </html>

@@ -1,5 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- ELEMENT SELECTORS ---
+    const medalsPanel = document.getElementById('medals-panel');
+    const medalsListContainer = document.getElementById('medals-list-container');
+    const medalsBackBtn = document.getElementById('medals-back-btn');
+
+    const monthProgressBar = document.getElementById('month-progress-bar');
+    const monthProgressText = document.getElementById('month-progress-text');
+    const monthGoalEmoji = document.getElementById('month-goal-emoji');
+
     const importExportBtn = document.getElementById('import-export-btn');
     const importExportPanel = document.getElementById('import-export-panel');
     const exportDataBtn = document.getElementById('export-data-btn');
@@ -78,6 +86,13 @@ document.addEventListener('DOMContentLoaded', () => {
         yearlyGoal: 600,
         schedule: {}
     };
+
+    const defaultMedals = {
+        completedMonths: [] // An array to store 'YYYY-MM' strings
+    };
+    const loadedMedals = JSON.parse(localStorage.getItem('serviceTimeTrackerMedals')) || {};
+    let medals = { ...defaultMedals, ...loadedMedals };
+
     const loadedSettings = JSON.parse(localStorage.getItem('serviceTimeTrackerSettings')) || {};
     let settings = { ...defaultSettings, ...loadedSettings };
 
@@ -98,6 +113,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function saveSettings() {
         localStorage.setItem('serviceTimeTrackerSettings', JSON.stringify(settings));
+    }
+
+    function saveMedals() {
+        localStorage.setItem('serviceTimeTrackerMedals', JSON.stringify(medals));
     }
 
     function updateSummary() {
@@ -123,7 +142,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
         monthGoalEl.textContent = settings.monthlyGoal;
         monthTimeLeftEl.textContent = formatMinutesToDisplay(minutesLeft);
-        monthPercentEl.textContent = percentComplete.toFixed(1);
+        // Update the new progress bar UI
+        monthProgressBar.style.width = `${Math.min(percentComplete, 100)}%`;
+        monthProgressText.textContent = `${percentComplete.toFixed(0)}%`;
+
+        // Update the state of the emoji (incomplete or complete)
+        if (percentComplete >= 100) {
+            monthGoalEmoji.classList.remove('incomplete');
+            monthGoalEmoji.classList.add('complete'); // Add the glow class
+        } else {
+            monthGoalEmoji.classList.add('incomplete');
+            monthGoalEmoji.classList.remove('complete'); // Remove the glow class
+        }
+
+        // --- MEDAL AWARDING LOGIC ---
+        // Create a unique key for the current month (e.g., "2025-10")
+        const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+
+        // Check if the goal is complete AND if the medal for this month hasn't been awarded yet
+        if (percentComplete >= 100 && !medals.completedMonths.includes(monthKey)) {
+            medals.completedMonths.push(monthKey); // Add this month to the list of completed months
+            saveMedals(); // Save the achievement
+            
+            // Show a congratulatory pop-up
+            openAlertModal('Congratulations! You completed your monthly goal and earned a medal!');
+        }
 
         const currentYear = new Date().getFullYear();
         const currentMonth = new Date().getMonth();
@@ -248,9 +291,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const existingEntry = database[dateKey] || {};
         const totalMinutes = existingEntry.time || 0;
 
-        timeHoursInput.value = Math.floor(totalMinutes / 60);
-        timeMinutesInput.value = totalMinutes % 60;
-        studiesInput.value = existingEntry.studies ?? '';
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        const studies = existingEntry.studies || 0;
+
+        timeHoursInput.value = hours > 0 ? hours : '';
+        timeMinutesInput.value = minutes > 0 ? minutes : '';
+        studiesInput.value = studies > 0 ? studies : '';
+
         notesInput.value = existingEntry.notes || '';
         
         const dateObj = new Date(dateKey + 'T00:00:00');
@@ -328,6 +376,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function closeImportExportPanel() {
         importExportPanel.classList.remove('visible');
+    }
+
+    function renderMedals() {
+        medalsListContainer.innerHTML = ''; // Clear the list first
+
+        const completedMonthsCount = medals.completedMonths.length;
+
+        if (completedMonthsCount > 0) {
+            const medalRow = document.createElement('div');
+            medalRow.className = 'medal-row';
+            medalRow.innerHTML = `
+                <div class="medal-icon">👍</div>
+                <div>Completed month goal</div>
+                <div class="medal-count">x${completedMonthsCount}</div>
+            `;
+            medalsListContainer.appendChild(medalRow);
+        } else {
+            medalsListContainer.innerHTML = '<p style="text-align: center; margin-top: 2rem;">No medals earned yet. Keep going!</p>';
+        }
+        // Future medals will be added here
+    }
+
+    function openMedalsPanel() {
+        renderMedals(); // Populate with the latest data
+        medalsPanel.classList.add('visible');
+    }
+
+    function closeMedalsPanel() {
+        medalsPanel.classList.remove('visible');
     }
 
     function exportData() {
@@ -478,7 +555,8 @@ document.addEventListener('DOMContentLoaded', () => {
     scheduleSaveBtn.addEventListener('click', saveSchedule);
     goalCancelBtn.addEventListener('click', closeGoalPanel);
     goalSaveBtn.addEventListener('click', saveGoals);
-    viewMedalsBtn.addEventListener('click', () => openAlertModal('Coming Soon!'));
+    viewMedalsBtn.addEventListener('click', openMedalsPanel);
+    medalsBackBtn.addEventListener('click', closeMedalsPanel);
     shareOptionBtn.addEventListener('click', openSharePanel);
     shareWithFriendBtn.addEventListener('click', shareApp);
     shareBackBtn.addEventListener('click', closeSharePanel);
