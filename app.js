@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- ELEMENT SELECTORS ---
+    const serviceYearTitleEl = document.getElementById('service-year-title');
+
     const medalsPanel = document.getElementById('medals-panel');
     const medalsListContainer = document.getElementById('medals-list-container');
     const medalsBackBtn = document.getElementById('medals-back-btn');
@@ -168,14 +170,26 @@ document.addEventListener('DOMContentLoaded', () => {
             openAlertModal('Congratulations! You completed your monthly goal and earned a medal!');
         }
 
-        const currentYear = new Date().getFullYear();
-        const currentMonth = new Date().getMonth();
-        let serviceYearStartYear = currentYear;
-        if (currentMonth < 8) { // Service year starts in September
+        // --- SERVICE YEAR CALCULATION & DISPLAY ---
+        const today = new Date();
+        const currentYear = today.getFullYear();
+        const currentMonth = today.getMonth(); // 0 = Jan, 8 = Sep
+
+        let serviceYearStartYear;
+        // If it's Sep-Dec (month 8-11), the service year started this year.
+        if (currentMonth >= 8) {
+            serviceYearStartYear = currentYear;
+        } else { // If it's Jan-Aug (month 0-7), it started last year.
             serviceYearStartYear = currentYear - 1;
         }
-        const serviceYearStartDate = new Date(serviceYearStartYear, 8, 1); // September 1st
 
+        // Update the title display (e.g., "Service Year 25/26")
+        const startYearShort = serviceYearStartYear.toString().slice(-2);
+        const endYearShort = (serviceYearStartYear + 1).toString().slice(-2);
+        serviceYearTitleEl.textContent = `Service Year ${startYearShort}/${endYearShort}`;
+
+        // Calculate total hours for the service year
+        const serviceYearStartDate = new Date(serviceYearStartYear, 8, 1); // Sep 1st
         let yearTotalMinutes = 0;
         for (const dateKey in database) {
             const entryDate = new Date(dateKey + 'T00:00:00');

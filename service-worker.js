@@ -1,5 +1,5 @@
 // A version string for your cache. This is how you update cached files.
-const CACHE_NAME = 'service-time-tracker-v1.2.2';
+const CACHE_NAME = 'service-time-tracker-v1.3.2';
 
 // List of files to cache (the core shell of your app)
 const urlsToCache = [
