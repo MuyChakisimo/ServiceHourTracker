@@ -264,6 +264,20 @@ main {
     opacity: 1;
 }
 
+.goal-emoji.trophy-glow {
+    /* A layered text-shadow creates a glow effect */
+    text-shadow: 0 0 5px #ffc300, 0 0 10px #ffc300;
+    filter: none; /* Remove any grayscale */
+    opacity: 1;
+}
+
+.goal-emoji.trophy-glow {
+    /* A layered text-shadow creates a glow effect */
+    text-shadow: 0 0 5px #ffc300, 0 0 10px #ffc300;
+    filter: none; /* Remove any grayscale */
+    opacity: 1;
+}
+
 footer {
     flex-shrink: 0;
     margin-top: 1rem;
@@ -692,4 +706,68 @@ body.modal-open {
 .medal-count {
     font-weight: bold;
     text-align: right;
+}
+
+/* --- NOTIFICATIONS PANEL STYLES --- */
+.setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+.setting-row label {
+    font-size: 1rem;
+}
+#notification-time {
+    background-color: var(--card-bg-color);
+    color: white;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.5rem;
+    font-size: 16px; /* Prevents mobile zoom */
+}
+/* The switch - a checkbox with a sliding knob */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+}
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+}
+input:checked + .slider {
+    background-color: var(--primary-purple);
+}
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+.slider.round {
+    border-radius: 34px;
+}
+.slider.round:before {
+    border-radius: 50%;
 }

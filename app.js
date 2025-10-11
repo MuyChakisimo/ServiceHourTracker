@@ -1,5 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- ELEMENT SELECTORS ---
+    const notificationsBtn = document.getElementById('notifications-btn');
+    const notificationsPanel = document.getElementById('notifications-panel');
+    const notificationsBackBtn = document.getElementById('notifications-back-btn');
+    const notificationsToggle = document.getElementById('notifications-toggle');
+    const notificationTimeInput = document.getElementById('notification-time');
+
+    const yearProgressBar = document.getElementById('year-progress-bar');
+    const yearProgressText = document.getElementById('year-progress-text');
+    const yearGoalEmoji = document.getElementById('year-goal-emoji');
+
     const serviceYearTitleEl = document.getElementById('service-year-title');
 
     const medalsPanel = document.getElementById('medals-panel');
@@ -84,14 +94,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentlyEditingDate = null; 
     let database = JSON.parse(localStorage.getItem('serviceTimeTrackerDB')) || {};
     const defaultSettings = {
-        monthlyGoal: 50,
-        yearlyGoal: 600,
-        schedule: {}
+        monthGoal: 0,
+        yearGoal: 0,
+        schedule: {},
+        notifications: { enabled: false, time: '12:00' } // Add this line
     };
 
     const defaultMedals = {
-        completedMonths: [] // An array to store 'YYYY-MM' strings
+        completedMonths: [], // An array to store 'YYYY-MM' strings
+        completedYears: []   // An array to store the start year of the service year
     };
+
     const loadedMedals = JSON.parse(localStorage.getItem('serviceTimeTrackerMedals')) || {};
     let medals = { ...defaultMedals, ...loadedMedals };
 
@@ -109,6 +122,78 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- CORE FUNCTIONS ---
+    function openNotificationsPanel() {
+        // Load saved settings into the UI
+        notificationsToggle.checked = settings.notifications.enabled || false;
+        notificationTimeInput.value = settings.notifications.time || '12:00'; // Changed to midday
+        notificationsPanel.classList.add('visible');
+    }
+
+    function closeNotificationsPanel() {
+        notificationsPanel.classList.remove('visible');
+    }
+
+    function handleNotificationsToggle() {
+        const isEnabled = notificationsToggle.checked;
+        if (isEnabled) {
+            // Ask for permission if not already granted
+            if (Notification.permission === 'default') {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        settings.notifications.enabled = true;
+                        saveNotificationSettings();
+                    } else {
+                        // User denied permission, so uncheck the box
+                        notificationsToggle.checked = false;
+                    }
+                });
+            } else if (Notification.permission === 'denied') {
+                openAlertModal('Notification permission was previously denied. Please enable it in your browser settings.');
+                notificationsToggle.checked = false;
+            } else { // Permission already granted
+                settings.notifications.enabled = true;
+                saveNotificationSettings();
+            }
+        } else { // User is disabling notifications
+            settings.notifications.enabled = false;
+            saveNotificationSettings();
+        }
+    }
+
+    async function saveNotificationSettings() {
+        if (!settings.notifications) {
+            settings.notifications = {};
+        }
+        settings.notifications.enabled = notificationsToggle.checked;
+        settings.notifications.time = notificationTimeInput.value;
+        saveSettings();
+
+        // --- Communicate with the Service Worker ---
+        if (navigator.serviceWorker.controller) {
+            // Send the latest settings to the service worker
+            navigator.serviceWorker.controller.postMessage({
+                action: 'updateSettings',
+                settings: settings
+            });
+        }
+        
+        const registration = await navigator.serviceWorker.ready;
+        if (settings.notifications.enabled) {
+            try {
+                // Register a periodic check that will run roughly once a day
+                await registration.periodicSync.register('check-reminder', {
+                    minInterval: 24 * 60 * 60 * 1000, // 24 hours
+                });
+            } catch (error) {
+                console.error('Periodic Sync could not be registered:', error);
+                openAlertModal('Reminders could not be set up. Your device may not support background tasks.');
+            }
+        } else {
+            // If disabled, unregister the periodic check
+            await registration.periodicSync.unregister('check-reminder');
+        }
+    }
+
     function saveData() {
         localStorage.setItem('serviceTimeTrackerDB', JSON.stringify(database));
     }
@@ -205,7 +290,28 @@ document.addEventListener('DOMContentLoaded', () => {
         yearAccumulatedHoursEl.textContent = formatMinutesToDisplay(yearTotalMinutes);
         yearGoalEl.textContent = settings.yearlyGoal;
         yearRemainingHoursEl.textContent = formatMinutesToDisplay(yearMinutesLeft);
-        yearPercentEl.textContent = yearPercentComplete.toFixed(1);
+        // Update the new yearly progress bar UI
+        yearProgressBar.style.width = `${Math.min(yearPercentComplete, 100)}%`;
+        yearProgressText.textContent = `${yearPercentComplete.toFixed(0)}%`;
+
+        // Update the state of the trophy emoji
+        if (yearPercentComplete >= 100) {
+            yearGoalEmoji.classList.remove('incomplete');
+            yearGoalEmoji.classList.add('trophy-glow');
+        } else {
+            yearGoalEmoji.classList.add('incomplete');
+            yearGoalEmoji.classList.remove('trophy-glow');
+        }
+
+        // --- TROPHY AWARDING LOGIC ---
+        // Check if the yearly goal is complete AND if the trophy for this service year hasn't been awarded yet
+        if (yearPercentComplete >= 100 && !medals.completedYears.includes(serviceYearStartYear)) {
+            medals.completedYears.push(serviceYearStartYear); // Add this service year to the list
+            saveMedals(); // Save the achievement
+            
+            // Show a congratulatory pop-up
+            openAlertModal('Amazing! You completed your service year goal and earned a trophy!');
+        }
     }
 
     function renderCalendar() {
@@ -411,6 +517,19 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             medalsListContainer.innerHTML = '<p style="text-align: center; margin-top: 2rem;">No medals earned yet. Keep going!</p>';
         }
+
+        const completedYearsCount = medals.completedYears.length;
+
+        if (completedYearsCount > 0) {
+            const trophyRow = document.createElement('div');
+            trophyRow.className = 'medal-row';
+            trophyRow.innerHTML = `
+                <div class="medal-icon">🏆</div>
+                <div>Completed service year goal</div>
+                <div class="medal-count">x${completedYearsCount}</div>
+            `;
+            medalsListContainer.appendChild(trophyRow);
+        }
         // Future medals will be added here
     }
 
@@ -491,14 +610,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- SCHEDULE PANEL FUNCTIONS ---
     function openSchedulePanel() {
-        for (let i = 0; i < 7; i++) {
-            const plannedMinutes = settings.schedule[i] || 0;
-            const isChecked = plannedMinutes > 0;
-            
-            scheduleDayCheckboxes[i].checked = isChecked;
-            scheduleHoursInputs[i].value = isChecked ? Math.floor(plannedMinutes / 60) : '';
-            scheduleMinutesInputs[i].value = isChecked ? plannedMinutes % 60 : '';
-        }
+        const schedule = settings.schedule || {};
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        days.forEach(day => {
+            const dayData = schedule[day] || {};
+            const checkbox = document.querySelector(`#schedule-panel input[data-day="${day}"]`);
+            const hoursInput = document.getElementById(`schedule-hours-${day.toLowerCase()}`);
+            const minutesInput = document.getElementById(`schedule-minutes-${day.toLowerCase()}`);
+
+            checkbox.checked = dayData.active || false;
+            hoursInput.value = dayData.hours || '';
+            minutesInput.value = dayData.minutes || '';
+        });
         schedulePanel.classList.add('visible');
     }
     
@@ -508,16 +631,19 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function saveSchedule() {
         const newSchedule = {};
-        for (let i = 0; i < 7; i++) {
-            if (scheduleDayCheckboxes[i].checked) {
-                const hours = parseInt(scheduleHoursInputs[i].value) || 0;
-                const minutes = parseInt(scheduleMinutesInputs[i].value) || 0;
-                newSchedule[i] = (hours * 60) + minutes;
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        days.forEach(day => {
+            const checkbox = document.querySelector(`#schedule-panel input[data-day="${day}"]`);
+            const hours = parseInt(document.getElementById(`schedule-hours-${day.toLowerCase()}`).value) || 0;
+            const minutes = parseInt(document.getElementById(`schedule-minutes-${day.toLowerCase()}`).value) || 0;
+            if (checkbox.checked) {
+                newSchedule[day] = { active: true, hours, minutes };
+            } else {
+                newSchedule[day] = { active: false, hours: 0, minutes: 0 };
             }
-        }
+        });
         settings.schedule = newSchedule;
         saveSettings();
-        renderCalendar();
         closeSchedulePanel();
     }
 
@@ -550,6 +676,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- EVENT LISTENERS ---
+    // Listen for messages from the service worker (e.g., to open the modal)
+    navigator.serviceWorker.addEventListener('message', event => {
+        if (event.data && event.data.action === 'open-modal-for-today') {
+            const today = new Date();
+            const dateKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            openModal(dateKey);
+        }
+    });
+    
     iosInstallDoneBtn.addEventListener('click', () => {
         iosInstallModal.classList.remove('visible');
         localStorage.setItem('hasSeenIosInstallPrompt', 'true');
@@ -578,6 +713,10 @@ document.addEventListener('DOMContentLoaded', () => {
     shareBackBtn.addEventListener('click', closeSharePanel);
     alertOkBtn.addEventListener('click', closeAlertModal);
     setGoalsBtn.addEventListener('click', openGoalPanel);
+    notificationsBtn.addEventListener('click', openNotificationsPanel);
+    notificationsBackBtn.addEventListener('click', closeNotificationsPanel);
+    notificationsToggle.addEventListener('change', handleNotificationsToggle);
+    notificationTimeInput.addEventListener('change', saveNotificationSettings);
 
     prevMonthBtn.addEventListener('click', () => {
         currentDate.setMonth(currentDate.getMonth() - 1);

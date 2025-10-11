@@ -21,10 +21,11 @@
         <h2>Options</h2>
         <button class="options-btn" id="set-goals-btn">Set Goals</button>
         <button class="options-btn" id="plan-schedule-btn">Plan a Schedule</button>
+        <button class="options-btn" id="notifications-btn">Notifications</button>
         <button class="options-btn" id="view-medals-btn">View Medals</button>
         <button class="options-btn" id="share-option-btn">Share Option</button>
         <button class="options-btn" id="import-export-btn">Import / Export Data</button>
-        <div class="version-number">Created by Omar Rivas V.1.3.2</div>
+        <div class="version-number">Created by Omar Rivas V.2.3.3</div>
     </nav>
 
     <div id="share-panel" class="panel">
@@ -32,7 +33,7 @@
             <h2>Share Options</h2>
         </div>
         <div class="panel-body">
-            <button class="options-btn" id="share-with-friend-btn">Share with a Friend</button>
+            <button class="options-btn" id="share-with-friend-btn">Share App with a Friend</button>
             </div>
         <div class="panel-footer">
             <button id="share-back-btn">Back</button>
@@ -82,7 +83,13 @@
                         <p>🎯 Goal: <span id="year-goal">0</span>h</p>
                         <p>⏱️ Total: <span id="year-accumulated-hours">0</span></p>
                         <p>⏳ Left: <span id="year-remaining-hours">0</span></p>
-                        <p>📈: <span id="year-percent">0.0</span>% Complete</p>
+                        <div class="progress-container">
+                            <div class="progress-bar-track">
+                                <div id="year-progress-bar" class="progress-bar-fill"></div>
+                                <span id="year-progress-text" class="progress-bar-text">0%</span>
+                            </div>
+                            <span id="year-goal-emoji" class="goal-emoji">🏆</span>
+                        </div>
                     </div>
                 </div>
             </footer>
@@ -155,57 +162,59 @@
         <div class="panel-header">
             <h2>Plan Your Weekly Schedule</h2>
         </div>
-        <div class="panel-body schedule-body">
-            <div class="schedule-row">
-                <label><input type="checkbox" class="schedule-day-checkbox" data-day="0"> Sunday</label>
-                <div class="time-input-group">
-                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="0" placeholder=""><span>h</span>
-                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="0" placeholder=""><span>min</span>
-                </div>
-            </div>
-            <div class="schedule-row">
-                <label><input type="checkbox" class="schedule-day-checkbox" data-day="1"> Monday</label>
-                <div class="time-input-group">
-                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="1" placeholder=""><span>h</span>
-                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="1" placeholder=""><span>min</span>
-                </div>
-            </div>
-            <div class="schedule-row">
-                <label><input type="checkbox" class="schedule-day-checkbox" data-day="2"> Tuesday</label>
-                <div class="time-input-group">
-                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="2" placeholder=""><span>h</span>
-                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="2" placeholder=""><span>min</span>
-                </div>
-            </div>
-            <div class="schedule-row">
-                <label><input type="checkbox" class="schedule-day-checkbox" data-day="3"> Wednesday</label>
-                <div class="time-input-group">
-                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="3" placeholder=""><span>h</span>
-                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="3" placeholder=""><span>min</span>
-                </div>
-            </div>
-            <div class="schedule-row">
-                <label><input type="checkbox" class="schedule-day-checkbox" data-day="4"> Thursday</label>
-                <div class="time-input-group">
-                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="4" placeholder=""><span>h</span>
-                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="4" placeholder=""><span>min</span>
-                </div>
-            </div>
-            <div class="schedule-row">
-                <label><input type="checkbox" class="schedule-day-checkbox" data-day="5"> Friday</label>
-                <div class="time-input-group">
-                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="5" placeholder=""><span>h</span>
-                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="5" placeholder=""><span>min</span>
-                </div>
-            </div>
-            <div class="schedule-row">
-                <label><input type="checkbox" class="schedule-day-checkbox" data-day="6"> Saturday</label>
-                <div class="time-input-group">
-                    <input type="text" inputmode="numeric" class="schedule-hours-input" data-day="6" placeholder=""><span>h</span>
-                    <input type="text" inputmode="numeric" class="schedule-minutes-input" data-day="6" placeholder=""><span>min</span>
-                </div>
-            </div>
+
+        <div class="panel-body">
+    <div class="schedule-row">
+        <label><input type="checkbox" data-day="Sunday"> Sunday</label>
+        <div class="time-input-group">
+            <input type="text" id="schedule-hours-sunday" class="schedule-input-h" placeholder="H"><span>h</span>
+            <input type="text" id="schedule-minutes-sunday" class="schedule-input-m" placeholder="M"><span>m</span>
         </div>
+    </div>
+    <div class="schedule-row">
+        <label><input type="checkbox" data-day="Monday"> Monday</label>
+        <div class="time-input-group">
+            <input type="text" id="schedule-hours-monday" class="schedule-input-h" placeholder="H"><span>h</span>
+            <input type="text" id="schedule-minutes-monday" class="schedule-input-m" placeholder="M"><span>m</span>
+        </div>
+    </div>
+    <div class="schedule-row">
+        <label><input type="checkbox" data-day="Tuesday"> Tuesday</label>
+        <div class="time-input-group">
+            <input type="text" id="schedule-hours-tuesday" class="schedule-input-h" placeholder="H"><span>h</span>
+            <input type="text" id="schedule-minutes-tuesday" class="schedule-input-m" placeholder="M"><span>m</span>
+        </div>
+    </div>
+    <div class="schedule-row">
+        <label><input type="checkbox" data-day="Wednesday"> Wednesday</label>
+        <div class="time-input-group">
+            <input type="text" id="schedule-hours-wednesday" class="schedule-input-h" placeholder="H"><span>h</span>
+            <input type="text" id="schedule-minutes-wednesday" class="schedule-input-m" placeholder="M"><span>m</span>
+        </div>
+    </div>
+    <div class="schedule-row">
+        <label><input type="checkbox" data-day="Thursday"> Thursday</label>
+        <div class="time-input-group">
+            <input type="text" id="schedule-hours-thursday" class="schedule-input-h" placeholder="H"><span>h</span>
+            <input type="text" id="schedule-minutes-thursday" class="schedule-input-m" placeholder="M"><span>m</span>
+        </div>
+    </div>
+    <div class="schedule-row">
+        <label><input type="checkbox" data-day="Friday"> Friday</label>
+        <div class="time-input-group">
+            <input type="text" id="schedule-hours-friday" class="schedule-input-h" placeholder="H"><span>h</span>
+            <input type="text" id="schedule-minutes-friday" class="schedule-input-m" placeholder="M"><span>m</span>
+        </div>
+    </div>
+    <div class="schedule-row">
+        <label><input type="checkbox" data-day="Saturday"> Saturday</label>
+        <div class="time-input-group">
+            <input type="text" id="schedule-hours-saturday" class="schedule-input-h" placeholder="H"><span>h</span>
+            <input type="text" id="schedule-minutes-saturday" class="schedule-input-m" placeholder="M"><span>m</span>
+        </div>
+    </div>
+</div>
+
         <div class="panel-footer">
             <button id="schedule-cancel-btn">Cancel</button>
             <button id="schedule-save-btn">Save Schedule</button>
@@ -290,5 +299,27 @@
         </div>
     </div>
     
+    <div id="notifications-panel" class="panel">
+        <div class="panel-header">
+            <h2>Notifications</h2>
+        </div>
+        <div class="panel-body">
+            <div class="setting-row">
+                <label for="notifications-toggle">Remind me on scheduled days</label>
+                <label class="switch">
+                    <input type="checkbox" id="notifications-toggle">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            <div class="setting-row">
+                <label for="notification-time">Remind me at</label>
+                <input type="time" id="notification-time">
+            </div>
+        </div>
+        <div class="panel-footer">
+            <button id="notifications-back-btn">Back</button>
+        </div>
+    </div>
+
 </body>
 </html>
