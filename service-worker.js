@@ -1,4 +1,4 @@
-const CACHE_NAME = 'service-time-tracker-v3.3.3'; // Make sure to update this version number
+const CACHE_NAME = 'service-time-tracker-v3.3.4'; // Make sure to update this version number
 const urlsToCache = [
     './',
     './index.html',

@@ -47,7 +47,7 @@ header {
     justify-content: space-between;
     align-items: center;
     padding: 0.5rem;
-    border-bottom: 2px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color); /* Thinner border */
     margin-bottom: 0.5rem;
 }
 
@@ -108,6 +108,7 @@ main {
 .calendar-day {
     background-color: var(--card-bg-color);
     border: 1px solid var(--border-color);
+    border-top: 6px solid transparent; 
     padding: 4px;
     border-radius: 4px;
     cursor: pointer;
@@ -160,21 +161,21 @@ main {
 }
 
 .calendar-day.missed {
-    border-top: 4px solid var(--status-red);
+    border-top-color: var(--status-red);
 }
 .calendar-day.under {
-    border-top: 4px solid var(--status-yellow);
+    border-top-color: var(--status-yellow);
 }
 .calendar-day.complete {
-    border-top: 4px solid var(--status-green);
+    border-top-color: var(--status-green);
 }
 .calendar-day.future-planned {
-    border-top: 4px solid var(--status-blue);
+    border-top-color: var(--status-blue);
 }
 
 .calendar-day.today {
-    outline: 2px solid var(--text-color-inverted);
-    outline-offset: -2px;
+    outline: 2px solid var(--text-color-inverted); /* Made outline thicker */
+    outline-offset: -2px; /* Match the new thickness */
 }
 
 /* --- INSTALL BANNER & FOOTER --- */
