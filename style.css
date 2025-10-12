@@ -1,12 +1,21 @@
-/* --- COLOR THEME & BASE STYLES --- */
+/* --- COLOR & THEME VARIABLES --- */
 :root {
+    /* These are the 4 main colors the user can customize */
     --background-color: #000000;
+    --card-bg-color: #240046;
+    --border-color: #5a189a;
+    --text-color: #e0aaff;
+
+    /* These are fixed accent & status colors (not user-customizable) */
     --primary-purple: #9d4edd;
     --light-purple: #c77dff;
-    --card-bg-color: #240046;
-    --text-color: #e0aaff;
-    --text-muted-color: #c77dff;
-    --border-color: #5a189a;
+    --status-red: #e5383b;
+    --status-yellow: #ffbe0b;
+    --status-green: #06d6a0;
+    --status-blue: #007bff;
+    --glow-yellow: #ffc300;
+    --slider-off-color: #ccc;
+    --text-color-inverted: #ffffff; /* For text on colored buttons */
 }
 
 html, body {
@@ -33,7 +42,7 @@ body {
 
 /* --- HEADER STYLES --- */
 header {
-    flex-shrink: 0; /* Add this line */
+    flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -49,7 +58,7 @@ header {
 }
 
 .month-display h1 {
-    color: var(--primary-purple);
+    color: var(--text-color);
     font-size: 1.25rem;
     margin: 0;
     text-align: center;
@@ -59,7 +68,7 @@ header {
 .icon-btn, .nav-btn {
     background: none;
     border: none;
-    color: var(--primary-purple);
+    color: var(--text-color);
     font-size: 1.75rem;
     cursor: pointer;
 }
@@ -83,7 +92,7 @@ main {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     text-align: center;
-    color: var(--light-purple);
+    color: var(--text-color);
     margin-bottom: 0.5rem;
     font-weight: bold;
     font-size: 0.8rem;
@@ -132,7 +141,7 @@ main {
 
 .day-summary {
     font-size: 0.65rem;
-    color: var(--text-muted-color);
+    color: var(--text-color);
     margin-top: 2px;
     white-space: normal;
     overflow: hidden;
@@ -151,25 +160,24 @@ main {
 }
 
 .calendar-day.missed {
-    border-top: 4px solid #e5383b; /* Red */
+    border-top: 4px solid var(--status-red);
 }
 .calendar-day.under {
-    border-top: 4px solid #ffbe0b; /* Yellow */
+    border-top: 4px solid var(--status-yellow);
 }
 .calendar-day.complete {
-    border-top: 4px solid #06d6a0; /* Green */
+    border-top: 4px solid var(--status-green);
 }
 .calendar-day.future-planned {
-    border-top: 4px solid #007bff; /* Blue */
+    border-top: 4px solid var(--status-blue);
 }
 
 .calendar-day.today {
-    outline: 2px solid white;
-    outline-offset: -2px; /* Draws the outline on the inside */
+    outline: 2px solid var(--text-color-inverted);
+    outline-offset: -2px;
 }
 
-/* --- FOOTER SUMMARY STYLES --- */
-/* --- INSTALL BANNER STYLES --- */
+/* --- INSTALL BANNER & FOOTER --- */
 #install-banner {
     position: fixed;
     bottom: 0;
@@ -182,12 +190,12 @@ main {
     align-items: center;
     justify-content: space-between;
     z-index: 900;
-    transform: translateY(150%); /* Start hidden below screen */
+    transform: translateY(150%);
     transition: transform 0.3s ease-in-out;
 }
 
 #install-banner.visible {
-    transform: translateY(0); /* Slide into view */
+    transform: translateY(0);
 }
 
 #install-banner p {
@@ -196,86 +204,13 @@ main {
 }
 
 #install-banner #install-btn {
-    background-color: var(--primary-purple);
-    color: white;
-    border: none;
+    background-color: var(--card-bg-color); /* Use theme's Text Background */
+    color: var(--text-color);               /* Use theme's Text color */
+    border: 1px solid var(--border-color);  /* Use theme's Outline color */
     border-radius: 4px;
     padding: 0.5rem 1rem;
     font-weight: bold;
     cursor: pointer;
-}
-
-/* --- PROGRESS BAR STYLES --- */
-.progress-container {
-    display: flex;
-    align-items: center; /* This line should already be there */
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-}
-
-.progress-bar-track {
-    flex-grow: 1;
-    height: 16px;
-    background-color: var(--background-color);
-    border-radius: 10px;
-    position: relative; /* For positioning the text */
-    overflow: hidden;
-}
-
-.progress-bar-fill {
-    height: 100%;
-    width: 0%; /* Starts at 0, controlled by JS */
-    background-color: #06d6a0; /* Green */
-    border-radius: 10px;
-    transition: width 0.5s ease-in-out;
-}
-
-.progress-bar-text {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 0.7rem;
-    font-weight: bold;
-    color: white;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
-}
-
-.goal-emoji {
-    font-size: 1.3rem;
-    transition: filter 0.5s, opacity 0.5s;
-    position: relative; /* Add this */
-    top: -5px;          /* Add this, adjust value if needed */
-}
-
-.goal-emoji.incomplete {
-    filter: grayscale(1);
-    opacity: 0.5;
-}
-
-.goal-emoji.complete {
-    /* A layered text-shadow creates a glow effect */
-    text-shadow: 0 0 5px #ffc300, 0 0 10px #ffc300;
-    filter: none; /* Remove any grayscale */
-    opacity: 1;
-}
-
-.goal-emoji.trophy-glow {
-    /* A layered text-shadow creates a glow effect */
-    text-shadow: 0 0 5px #ffc300, 0 0 10px #ffc300;
-    filter: none; /* Remove any grayscale */
-    opacity: 1;
-}
-
-.goal-emoji.trophy-glow {
-    /* A layered text-shadow creates a glow effect */
-    text-shadow: 0 0 5px #ffc300, 0 0 10px #ffc300;
-    filter: none; /* Remove any grayscale */
-    opacity: 1;
 }
 
 footer {
@@ -295,13 +230,14 @@ footer {
     background-color: var(--card-bg-color);
     padding: 0.4rem 0.6rem;
     border-radius: 6px;
+    border: 1px solid var(--border-color); /* Add this line */
 }
 
 .summary-box h3 {
     margin-top: 0;
     margin-bottom: 0.4rem;
     font-size: 0.8rem;
-    color: var(--primary-purple);
+    color: var(--text-color);
     text-align: center;
 }
 
@@ -323,9 +259,67 @@ footer {
 
 .service-year-dates {
     font-size: 0.6rem;
-    color: var(--text-muted-color);
+    color: var(--text-color);
     text-align: center;
     margin: -0.2rem 0 0.4rem 0;
+}
+
+/* --- PROGRESS BAR STYLES --- */
+.progress-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.progress-bar-track {
+    flex-grow: 1;
+    height: 16px;
+    background-color: var(--background-color);
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background-color: var(--status-green);
+    border-radius: 10px;
+    transition: width 0.5s ease-in-out;
+}
+
+.progress-bar-text {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: var(--text-color-inverted);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.goal-emoji {
+    font-size: 1.3rem;
+    transition: filter 0.5s, opacity 0.5s;
+    position: relative;
+    top: -5px;
+}
+
+.goal-emoji.incomplete {
+    filter: grayscale(1);
+    opacity: 0.5;
+}
+
+.goal-emoji.complete, .goal-emoji.trophy-glow {
+    text-shadow: 0 0 5px var(--glow-yellow), 0 0 10px var(--glow-yellow);
+    filter: none;
+    opacity: 1;
 }
 
 /* --- OPTIONS PANEL & SLIDE ANIMATION --- */
@@ -334,7 +328,7 @@ footer {
     top: 0;
     left: 0;
     height: 100%;
-    width: 100%; 
+    width: 100%;
     background-color: var(--background-color);
     padding: 2rem;
     box-sizing: border-box;
@@ -348,10 +342,11 @@ footer {
     top: 1.5rem;
     right: 1.5rem;
     font-size: 2rem;
+    color: var(--text-color); /* Add this line */
 }
 
 #options-panel h2 {
-    color: var(--primary-purple);
+    color: var(--text-color); /* Use the theme's text color */
     margin-top: 0;
     text-align: center;
 }
@@ -359,7 +354,7 @@ footer {
 .options-btn {
     display: block;
     width: 100%;
-    background: none;
+    background-color: var(--card-bg-color); /* Use the theme's card background for button background */
     border: 1px solid var(--border-color);
     color: var(--text-color);
     padding: 1rem;
@@ -375,7 +370,8 @@ label.options-btn {
 }
 
 .options-btn:hover {
-    background-color: var(--border-color);
+    background-color: var(--border-color); /* This is fine as it uses --border-color */
+    filter: brightness(1.2); /* Optional: Add a subtle brightness for better feedback */
 }
 
 #main-content {
@@ -392,7 +388,7 @@ label.options-btn {
     position: absolute;
     bottom: 1rem;
     right: 1.5rem;
-    color: white;
+    color: var(--text-color); /* Use the theme's text color */
     font-size: 0.8rem;
 }
 
@@ -410,7 +406,7 @@ label.options-btn {
     visibility: hidden;
     opacity: 0;
     transition: opacity 0.3s, visibility 0.3s;
-    z-index: 4000; /* Increased from 1000 */
+    z-index: 4000;
 }
 
 .modal-overlay.visible {
@@ -442,7 +438,7 @@ body.modal-open {
     color: var(--light-purple);
 }
 
-.modal-body input {
+.modal-body input, .modal-body textarea {
     width: 100%;
     padding: 0.75rem;
     background-color: var(--background-color);
@@ -454,19 +450,11 @@ body.modal-open {
 }
 
 .modal-body input.invalid {
-    border-color: #e5383b;
-    box-shadow: 0 0 5px #e5383b;
+    border-color: var(--status-red);
+    box-shadow: 0 0 5px var(--status-red);
 }
 
 .modal-body textarea {
-    width: 100%;
-    padding: 0.75rem;
-    background-color: var(--background-color);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    color: var(--text-color);
-    font-size: 1rem;
-    box-sizing: border-box;
     resize: vertical;
 }
 
@@ -505,11 +493,11 @@ body.modal-open {
     cursor: pointer;
 }
 
-#modal-save-btn {
+#modal-save-btn, #alert-ok-btn, #ios-install-done-btn {
     background-color: var(--primary-purple);
-    color: white;
+    color: var(--text-color-inverted);
 }
-#modal-save-btn:hover {
+#modal-save-btn:hover, #alert-ok-btn:hover, #ios-install-done-btn:hover {
     opacity: 0.8;
 }
 
@@ -522,38 +510,14 @@ body.modal-open {
     background-color: var(--border-color);
 }
 
-#alert-message {
-    text-align: center;
-    font-size: 1.2rem;
-    margin: 0 0 2rem 0;
-}
-
-#alert-ok-btn {
-    background-color: var(--primary-purple);
-    color: white;
-    width: 100px;
-}
-#alert-ok-btn:hover {
-    opacity: 0.8;
-}
-
-.ios-install-message {
+#alert-message, .ios-install-message {
     text-align: center;
     font-size: 1.1rem;
     line-height: 1.5;
     margin: 0 0 2rem 0;
 }
 
-#ios-install-done-btn {
-    background-color: var(--primary-purple);
-    color: white;
-    width: 100px;
-}
-#ios-install-done-btn:hover {
-    opacity: 0.8;
-}
-
-/* --- SCHEDULE & GOAL PANEL STYLES --- */
+/* --- GENERIC PANEL STYLES --- */
 .panel {
     position: fixed;
     top: 0;
@@ -615,9 +579,9 @@ body.modal-open {
     width: 100%;
     padding: 1rem;
     font-size: 1rem;
-    background-color: var(--primary-purple);
-    color: white;
-    border: none;
+    background-color: var(--card-bg-color);   /* Use "Text Background" color */
+    color: var(--text-color);               /* Use "Text" color */
+    border: 1px solid var(--border-color);  /* Use "Outlines" color */
     border-radius: 4px;
     cursor: pointer;
 }
@@ -628,18 +592,16 @@ body.modal-open {
     padding: 1rem 2rem;
 }
 
-/* Rule 1: For the compact "Plan a Schedule" inputs */
+#schedule-panel .time-input-group input, #goal-panel .time-input-group input {
+    font-size: 16px;
+}
 #schedule-panel .time-input-group input {
     width: 45px;
     padding: 0.5rem 0.25rem;
-    font-size: 16px; /* Prevents auto-zoom on mobile */
 }
-
-/* Rule 2: For the wider "Set Goals" inputs */
 #goal-panel .time-input-group input {
     width: auto;
     padding: 0.5rem;
-    font-size: 16px; /* Prevents auto-zoom on mobile */
 }
 
 #goal-cancel-btn, #schedule-cancel-btn {
@@ -651,34 +613,10 @@ body.modal-open {
     background-color: var(--border-color);
 }
 
-/* Media query for screens 768px or wider (tablets and desktops) */
-@media (min-width: 768px) {
-    
-    .container {
-        /* On desktop, don't force the container to be the full screen height */
-        height: auto;
-        max-width: 900px; /* Allow the layout to be a bit wider */
-    }
-
-    body {
-        /* Add some vertical padding to center the content on the page */
-        padding: 2rem 1rem;
-        height: auto; 
-    }
-
-    .calendar-day {
-        /* The default min-height is fine, just add more internal padding */
-        padding: 8px;
-    }
-    
-    /* You can keep any other desktop-specific styles you liked here */
-}
-
-/* --- MEDALS PANEL STYLES --- */
-.medals-list-header,
-.medal-row {
+/* --- MEDALS & NOTIFICATIONS PANELS --- */
+.medals-list-header, .medal-row {
     display: grid;
-    grid-template-columns: 50px 1fr 80px; /* Icon | Description | Count */
+    grid-template-columns: 50px 1fr 80px;
     align-items: center;
     gap: 1rem;
     padding: 0.5rem 1rem;
@@ -708,7 +646,6 @@ body.modal-open {
     text-align: right;
 }
 
-/* --- NOTIFICATIONS PANEL STYLES --- */
 .setting-row {
     display: flex;
     justify-content: space-between;
@@ -721,13 +658,12 @@ body.modal-open {
 }
 #notification-time {
     background-color: var(--card-bg-color);
-    color: white;
+    color: var(--text-color);
     border: 1px solid var(--border-color);
     border-radius: 6px;
     padding: 0.5rem;
-    font-size: 16px; /* Prevents mobile zoom */
+    font-size: 16px;
 }
-/* The switch - a checkbox with a sliding knob */
 .switch {
     position: relative;
     display: inline-block;
@@ -746,7 +682,7 @@ body.modal-open {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #ccc;
+    background-color: var(--slider-off-color);
     transition: .4s;
 }
 .slider:before {
@@ -756,7 +692,7 @@ body.modal-open {
     width: 26px;
     left: 4px;
     bottom: 4px;
-    background-color: white;
+    background-color: var(--text-color-inverted);
     transition: .4s;
 }
 input:checked + .slider {
@@ -770,4 +706,50 @@ input:checked + .slider:before {
 }
 .slider.round:before {
     border-radius: 50%;
+}
+
+/* --- RESPONSIVE STYLES --- */
+@media (min-width: 768px) {
+    .container {
+        height: auto;
+        max-width: 900px;
+    }
+    body {
+        padding: 2rem 1rem;
+        height: auto;
+    }
+    .calendar-day {
+        padding: 8px;
+    }
+}
+
+/* --- THEME PANEL STYLES --- */
+.theme-setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background-color: var(--card-bg-color);
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border-color);
+}
+
+.color-picker {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 50px;
+    height: 50px;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+}
+.color-picker::-webkit-color-swatch {
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+}
+.color-picker::-moz-color-swatch {
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
 }

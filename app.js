@@ -1,5 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- ELEMENT SELECTORS ---
+    const textColorPicker = document.getElementById('text-color-picker');
+    const cardBgColorPicker = document.getElementById('card-bg-color-picker');
+    const borderColorPicker = document.getElementById('border-color-picker');
+    const backgroundColorPicker = document.getElementById('background-color-picker');
+
+    const themeBtn = document.getElementById('theme-btn');
+    const themePanel = document.getElementById('theme-panel');
+    const themeBackBtn = document.getElementById('theme-back-btn');
+
     const notificationsBtn = document.getElementById('notifications-btn');
     const notificationsPanel = document.getElementById('notifications-panel');
     const notificationsBackBtn = document.getElementById('notifications-back-btn');
@@ -47,9 +56,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const schedulePanel = document.getElementById('schedule-panel');
     const scheduleCancelBtn = document.getElementById('schedule-cancel-btn');
     const scheduleSaveBtn = document.getElementById('schedule-save-btn');
-    const scheduleDayCheckboxes = document.querySelectorAll('.schedule-day-checkbox');
-    const scheduleHoursInputs = document.querySelectorAll('.schedule-hours-input');
-    const scheduleMinutesInputs = document.querySelectorAll('.schedule-minutes-input');
     
     const goalPanel = document.getElementById('goal-panel');
     const goalPanelTitle = document.getElementById('goal-panel-title');
@@ -89,6 +95,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- STATE & DATABASE ---
+    function init() {
+        loadCustomTheme(); // <-- Add it right here
+        
+        renderCalendar(currentDate.getFullYear(), currentDate.getMonth());
+        updateSummary();
+    }
+
     let deferredPrompt;
     let currentDate = new Date();
     let currentlyEditingDate = null; 
@@ -97,7 +110,13 @@ document.addEventListener('DOMContentLoaded', () => {
         monthGoal: 0,
         yearGoal: 0,
         schedule: {},
-        notifications: { enabled: false, time: '12:00' } // Add this line
+        notifications: { enabled: false, time: '12:00' },
+        customTheme: { // Add this new object
+            '--text-color': '#e0aaff',
+            '--card-bg-color': '#240046',
+            '--border-color': '#5a189a',
+            '--background-color': '#000000'
+        }
     };
 
     const defaultMedals = {
@@ -131,6 +150,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function closeNotificationsPanel() {
         notificationsPanel.classList.remove('visible');
+    }
+
+    function openThemePanel() {
+    const theme = settings.customTheme;
+    textColorPicker.value = theme['--text-color'];
+    cardBgColorPicker.value = theme['--card-bg-color'];
+    borderColorPicker.value = theme['--border-color'];
+    backgroundColorPicker.value = theme['--background-color'];
+    themePanel.classList.add('visible');
+}
+
+    function closeThemePanel() {
+        themePanel.classList.remove('visible');
+    }
+
+    function applyCustomTheme(theme) {
+        const root = document.documentElement;
+        root.style.setProperty('--text-color', theme['--text-color']);
+        root.style.setProperty('--card-bg-color', theme['--card-bg-color']);
+        root.style.setProperty('--border-color', theme['--border-color']);
+        root.style.setProperty('--background-color', theme['--background-color']);
+    }
+
+    function loadCustomTheme() {
+        if (settings.customTheme) {
+            applyCustomTheme(settings.customTheme);
+        }
     }
 
     function handleNotificationsToggle() {
@@ -346,7 +392,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const dayOfWeek = dayDate.getDay();
-            const plannedMinutes = settings.schedule[dayOfWeek] || 0;
+            const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            const dayName = dayNames[dayOfWeek];
+            const daySchedule = settings.schedule[dayName] || {};
+            const plannedMinutes = (daySchedule.hours * 60) + (daySchedule.minutes || 0);
             const actualMinutes = database[dateKey]?.time || 0;
 
             if (plannedMinutes > 0) {
@@ -406,8 +455,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- DATA ENTRY MODAL FUNCTIONS ---
-    document.body.classList.add('modal-open');
     function openModal(dateKey) {
+        document.body.classList.add('modal-open');
         currentlyEditingDate = dateKey;
         const existingEntry = database[dateKey] || {};
         const totalMinutes = existingEntry.time || 0;
@@ -432,8 +481,8 @@ document.addEventListener('DOMContentLoaded', () => {
         timeHoursInput.focus();
     }
 
-    document.body.classList.remove('modal-open');
     function closeModal() {
+        document.body.classList.remove('modal-open');
         modal.classList.remove('visible');
         currentlyEditingDate = null;
     }
@@ -613,22 +662,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const schedule = settings.schedule || {};
         const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         days.forEach(day => {
-            const dayData = schedule[day] || {};
+            const dayData = schedule[day.toLowerCase()] || {}; // Use lowercase day
             const checkbox = document.querySelector(`#schedule-panel input[data-day="${day}"]`);
             const hoursInput = document.getElementById(`schedule-hours-${day.toLowerCase()}`);
             const minutesInput = document.getElementById(`schedule-minutes-${day.toLowerCase()}`);
 
-            checkbox.checked = dayData.active || false;
-            hoursInput.value = dayData.hours || '';
-            minutesInput.value = dayData.minutes || '';
+            if (checkbox) checkbox.checked = dayData.active || false;
+            if (hoursInput) hoursInput.value = dayData.hours || '';
+            if (minutesInput) minutesInput.value = dayData.minutes || '';
         });
         schedulePanel.classList.add('visible');
     }
-    
-    function closeSchedulePanel() {
-        schedulePanel.classList.remove('visible');
-    }
-    
+
     function saveSchedule() {
         const newSchedule = {};
         const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -636,15 +681,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const checkbox = document.querySelector(`#schedule-panel input[data-day="${day}"]`);
             const hours = parseInt(document.getElementById(`schedule-hours-${day.toLowerCase()}`).value) || 0;
             const minutes = parseInt(document.getElementById(`schedule-minutes-${day.toLowerCase()}`).value) || 0;
-            if (checkbox.checked) {
-                newSchedule[day] = { active: true, hours, minutes };
-            } else {
-                newSchedule[day] = { active: false, hours: 0, minutes: 0 };
-            }
+            
+            // Use lowercase day for the key
+            newSchedule[day.toLowerCase()] = { 
+                active: checkbox.checked, 
+                hours: checkbox.checked ? hours : 0, 
+                minutes: checkbox.checked ? minutes : 0 
+            };
         });
         settings.schedule = newSchedule;
         saveSettings();
+        renderCalendar(); // Add this to update the calendar with new schedule info
         closeSchedulePanel();
+    }
+    
+    function closeSchedulePanel() {
+        schedulePanel.classList.remove('visible');
     }
 
     // --- GOAL PANEL FUNCTIONS ---
@@ -676,6 +728,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- EVENT LISTENERS ---
+    textColorPicker.addEventListener('input', () => {
+        settings.customTheme['--text-color'] = textColorPicker.value;
+        applyCustomTheme(settings.customTheme);
+        saveSettings();
+    });
+
+    cardBgColorPicker.addEventListener('input', () => {
+        settings.customTheme['--card-bg-color'] = cardBgColorPicker.value;
+        applyCustomTheme(settings.customTheme);
+        saveSettings();
+    });
+
+    borderColorPicker.addEventListener('input', () => {
+        settings.customTheme['--border-color'] = borderColorPicker.value;
+        applyCustomTheme(settings.customTheme);
+        saveSettings();
+    });
+
+    backgroundColorPicker.addEventListener('input', () => {
+        settings.customTheme['--background-color'] = backgroundColorPicker.value;
+        applyCustomTheme(settings.customTheme);
+        saveSettings();
+    });
+
+    themeBtn.addEventListener('click', openThemePanel);
+    themeBackBtn.addEventListener('click', closeThemePanel);
+
     // Listen for messages from the service worker (e.g., to open the modal)
     navigator.serviceWorker.addEventListener('message', event => {
         if (event.data && event.data.action === 'open-modal-for-today') {
