@@ -1,46 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Service Time Tracker</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#000000">
+
+    <script>
+        (function() {
+            try {
+                const settingsStr = localStorage.getItem('serviceTimeTrackerSettings');
+                if (settingsStr) {
+                    const settings = JSON.parse(settingsStr);
+                    if (settings.customTheme) {
+                        const theme = settings.customTheme;
+                        const root = document.documentElement;
+                        root.style.setProperty('--text-color', theme['--text-color']);
+                        root.style.setProperty('--card-bg-color', theme['--card-bg-color']);
+                        root.style.setProperty('--border-color', theme['--border-color']);
+                        root.style.setProperty('--background-color', theme['--background-color']);
+                    }
+                }
+            } catch (e) { console.error('Error preloading theme:', e); }
+        })();
+    </script>
+
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="install-banner">
-        <p>Add to your Home Screen for a better experience!</p>
-        <button id="install-btn">Install</button>
-        <button id="close-install-banner-btn" class="icon-btn">✕</button>
-    </div>
-    
-    <nav id="options-panel">
-        <button id="options-close-btn" class="icon-btn">✕</button>
-        <h2>Options</h2>
-        <button class="options-btn" id="set-goals-btn">Set Goals</button>
-        <button class="options-btn" id="plan-schedule-btn">Plan a Schedule</button>
-        <button class="options-btn" id="notifications-btn">Notifications</button>
-        <button class="options-btn" id="view-medals-btn">View Medals</button>
-        <button class="options-btn" id="theme-btn">Custom Theme</button>
-        <button class="options-btn" id="share-option-btn">Share Option</button>
-        <button class="options-btn" id="import-export-btn">Import / Export Data</button>
-        <div class="version-number">Created by Omar Rivas V.3.3.4</div>
-    </nav>
-
-    <div id="share-panel" class="panel">
-        <div class="panel-header">
-            <h2>Share Options</h2>
-        </div>
-        <div class="panel-body">
-            <button class="options-btn" id="share-with-friend-btn">Share App with a Friend</button>
-            </div>
-        <div class="panel-footer">
-            <button id="share-back-btn">Back</button>
-        </div>
-    </div>
-
     <div id="main-content">
         <div class="container">
             <header>
@@ -50,13 +39,11 @@
                     <h1 id="current-month-year">October 2025</h1>
                     <button class="nav-btn" id="next-month-btn">▶</button>
                 </div>
-                <div class="header-spacer"></div> 
-            </header>
+                </header>
 
             <main>
                 <div id="calendar-weekdays">
-                    <div>Sun</div><div>Mon</div><div>Tue</div>
-                    <div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
                 </div>
                 <div id="calendar-grid"></div>
             </main>
@@ -97,125 +84,80 @@
         </div>
     </div>
 
-    <div id="entry-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h2 id="modal-title">Enter Details for a Date</h2>
-            <div class="modal-body">
-                <div class="input-group">
-                    <div class="form-group">
-                        <label>Time</label>
-                        <div class="time-input-group">
-                            <input type="text" inputmode="numeric" id="time-hours-input" placeholder="Hours">
-                            <span>h</span>
-                            <input type="text" inputmode="numeric" id="time-minutes-input" placeholder="Mins">
-                            <span>min</span>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="studies-input"># of Studies</label>
-                        <input type="text" inputmode="numeric" id="studies-input">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="notes-input">Notes</label>
-                    <textarea id="notes-input" rows="4"></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button id="modal-close-btn">Cancel</button>
-                <button id="modal-save-btn">Save</button>
-            </div>
-        </div>
-    </div>
+    <nav id="options-panel">
+        <button id="options-close-btn" class="icon-btn">✕</button>
+        <h2>Options</h2>
+        <button class="options-btn" id="set-goals-btn">Set Goals</button>
+        <button class="options-btn" id="plan-schedule-btn">Plan a Schedule</button>
+        <button class="options-btn" id="notifications-btn">Notifications</button>
+        <button class="options-btn" id="view-medals-btn">View Medals</button>
+        <button class="options-btn" id="theme-btn">Custom Theme</button>
+        <button class="options-btn" id="share-option-btn">Share Option</button>
+        <button class="options-btn" id="import-export-btn">Import / Export Data</button>
+        <div class="version-number">Created by Omar Rivas V.3.5.7</div>
+    </nav>
 
-    <div id="entry-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h2 id="modal-title">Enter Details for a Date</h2>
-            <div class="modal-body">
-                <div class="input-group">
-                    <div class="form-group">
-                        <label>Time</label>
-                        <div class="time-input-group">
-                            <input type="text" inputmode="numeric" id="time-hours-input" placeholder="Hours">
-                            <span>h</span>
-                            <input type="text" inputmode="numeric" id="time-minutes-input" placeholder="Mins">
-                            <span>min</span>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="studies-input"># of Studies</label>
-                        <input type="text" inputmode="numeric" id="studies-input">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="notes-input">Notes</label>
-                    <textarea id="notes-input" rows="4"></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button id="modal-close-btn">Cancel</button>
-                <button id="modal-save-btn">Save</button>
-            </div>
-        </div>
-    </div>
-    
-    <div id="schedule-panel" class="panel">
-        <div class="panel-header">
-            <h2>Plan Your Weekly Schedule</h2>
-        </div>
-
+    <div id="share-panel" class="panel">
+        <div class="panel-header"><h2>Share Options</h2></div>
         <div class="panel-body">
-    <div class="schedule-row">
-        <label><input type="checkbox" data-day="Sunday"> Sunday</label>
-        <div class="time-input-group">
-            <input type="text" id="schedule-hours-sunday" class="schedule-input-h" placeholder="H"><span>h</span>
-            <input type="text" id="schedule-minutes-sunday" class="schedule-input-m" placeholder="M"><span>m</span>
+            <button class="options-btn" id="share-with-friend-btn">Share App with a Friend</button>
         </div>
+        <div class="panel-footer"><button id="share-back-btn">Back</button></div>
     </div>
-    <div class="schedule-row">
-        <label><input type="checkbox" data-day="Monday"> Monday</label>
-        <div class="time-input-group">
-            <input type="text" id="schedule-hours-monday" class="schedule-input-h" placeholder="H"><span>h</span>
-            <input type="text" id="schedule-minutes-monday" class="schedule-input-m" placeholder="M"><span>m</span>
-        </div>
-    </div>
-    <div class="schedule-row">
-        <label><input type="checkbox" data-day="Tuesday"> Tuesday</label>
-        <div class="time-input-group">
-            <input type="text" id="schedule-hours-tuesday" class="schedule-input-h" placeholder="H"><span>h</span>
-            <input type="text" id="schedule-minutes-tuesday" class="schedule-input-m" placeholder="M"><span>m</span>
-        </div>
-    </div>
-    <div class="schedule-row">
-        <label><input type="checkbox" data-day="Wednesday"> Wednesday</label>
-        <div class="time-input-group">
-            <input type="text" id="schedule-hours-wednesday" class="schedule-input-h" placeholder="H"><span>h</span>
-            <input type="text" id="schedule-minutes-wednesday" class="schedule-input-m" placeholder="M"><span>m</span>
-        </div>
-    </div>
-    <div class="schedule-row">
-        <label><input type="checkbox" data-day="Thursday"> Thursday</label>
-        <div class="time-input-group">
-            <input type="text" id="schedule-hours-thursday" class="schedule-input-h" placeholder="H"><span>h</span>
-            <input type="text" id="schedule-minutes-thursday" class="schedule-input-m" placeholder="M"><span>m</span>
-        </div>
-    </div>
-    <div class="schedule-row">
-        <label><input type="checkbox" data-day="Friday"> Friday</label>
-        <div class="time-input-group">
-            <input type="text" id="schedule-hours-friday" class="schedule-input-h" placeholder="H"><span>h</span>
-            <input type="text" id="schedule-minutes-friday" class="schedule-input-m" placeholder="M"><span>m</span>
-        </div>
-    </div>
-    <div class="schedule-row">
-        <label><input type="checkbox" data-day="Saturday"> Saturday</label>
-        <div class="time-input-group">
-            <input type="text" id="schedule-hours-saturday" class="schedule-input-h" placeholder="H"><span>h</span>
-            <input type="text" id="schedule-minutes-saturday" class="schedule-input-m" placeholder="M"><span>m</span>
-        </div>
-    </div>
-</div>
 
+    <div id="schedule-panel" class="panel">
+        <div class="panel-header"><h2>Plan Your Weekly Schedule</h2></div>
+        <div class="panel-body">
+            <div class="schedule-row">
+                <label for="schedule-check-sunday"><input type="checkbox" id="schedule-check-sunday" data-day="Sunday"> Sunday</label>
+                <div class="time-input-group">
+                    <input type="text" id="schedule-hours-sunday" placeholder="H"><span>h</span>
+                    <input type="text" id="schedule-minutes-sunday" placeholder="M"><span>m</span>
+                </div>
+            </div>
+            <div class="schedule-row">
+                <label for="schedule-check-monday"><input type="checkbox" id="schedule-check-monday" data-day="Monday"> Monday</label>
+                <div class="time-input-group">
+                    <input type="text" id="schedule-hours-monday" placeholder="H"><span>h</span>
+                    <input type="text" id="schedule-minutes-monday" placeholder="M"><span>m</span>
+                </div>
+            </div>
+            <div class="schedule-row">
+                <label for="schedule-check-tuesday"><input type="checkbox" id="schedule-check-tuesday" data-day="Tuesday"> Tuesday</label>
+                <div class="time-input-group">
+                    <input type="text" id="schedule-hours-tuesday" placeholder="H"><span>h</span>
+                    <input type="text" id="schedule-minutes-tuesday" placeholder="M"><span>m</span>
+                </div>
+            </div>
+            <div class="schedule-row">
+                <label for="schedule-check-wednesday"><input type="checkbox" id="schedule-check-wednesday" data-day="Wednesday"> Wednesday</label>
+                <div class="time-input-group">
+                    <input type="text" id="schedule-hours-wednesday" placeholder="H"><span>h</span>
+                    <input type="text" id="schedule-minutes-wednesday" placeholder="M"><span>m</span>
+                </div>
+            </div>
+            <div class="schedule-row">
+                <label for="schedule-check-thursday"><input type="checkbox" id="schedule-check-thursday" data-day="Thursday"> Thursday</label>
+                <div class="time-input-group">
+                    <input type="text" id="schedule-hours-thursday" placeholder="H"><span>h</span>
+                    <input type="text" id="schedule-minutes-thursday" placeholder="M"><span>m</span>
+                </div>
+            </div>
+            <div class="schedule-row">
+                <label for="schedule-check-friday"><input type="checkbox" id="schedule-check-friday" data-day="Friday"> Friday</label>
+                <div class="time-input-group">
+                    <input type="text" id="schedule-hours-friday" placeholder="H"><span>h</span>
+                    <input type="text" id="schedule-minutes-friday" placeholder="M"><span>m</span>
+                </div>
+            </div>
+            <div class="schedule-row">
+                <label for="schedule-check-saturday"><input type="checkbox" id="schedule-check-saturday" data-day="Saturday"> Saturday</label>
+                <div class="time-input-group">
+                    <input type="text" id="schedule-hours-saturday" placeholder="H"><span>h</span>
+                    <input type="text" id="schedule-minutes-saturday" placeholder="M"><span>m</span>
+                </div>
+            </div>
+        </div>
         <div class="panel-footer">
             <button id="schedule-cancel-btn">Cancel</button>
             <button id="schedule-save-btn">Save Schedule</button>
@@ -223,22 +165,18 @@
     </div>
 
     <div id="goal-panel" class="panel">
-        <div class="panel-header">
-            <h2 id="goal-panel-title">Set your goal for:</h2>
-        </div>
+        <div class="panel-header"><h2 id="goal-panel-title">Set your goal for:</h2></div>
         <div class="panel-body">
             <div class="goal-row">
                 <label for="monthly-goal-input">the Month:</label>
                 <div class="time-input-group">
-                    <input type="number" inputmode="numeric" id="monthly-goal-input">
-                    <span>h</span>
+                    <input type="number" inputmode="numeric" id="monthly-goal-input"><span>h</span>
                 </div>
             </div>
             <div class="goal-row">
                 <label for="yearly-goal-input">the Year:</label>
                 <div class="time-input-group">
-                    <input type="number" inputmode="numeric" id="yearly-goal-input">
-                    <span>h</span>
+                    <input type="number" inputmode="numeric" id="yearly-goal-input"><span>h</span>
                 </div>
             </div>
         </div>
@@ -248,56 +186,25 @@
         </div>
     </div>
 
-    <div id="alert-modal" class="modal-overlay">
-        <div class="modal-content">
-            <p id="alert-message">Message Here</p>
-            <div class="modal-footer" style="justify-content: center;">
-                <button id="alert-ok-btn">OK</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="app.js"></script>
-
-    <div id="ios-install-modal" class="modal-overlay">
-        <div class="modal-content">
-            <p class="ios-install-message">To install this app, tap the Share icon, then scroll down and select 'Add to Home Screen'.</p>
-            <div class="modal-footer" style="justify-content: center;">
-                <button id="ios-install-done-btn">Done</button>
-            </div>
-        </div>
-    </div>
-
     <div id="import-export-panel" class="panel">
-        <div class="panel-header">
-            <h2>Import / Export Data</h2>
-        </div>
+        <div class="panel-header"><h2>Import / Export Data</h2></div>
         <div class="panel-body">
             <button class="options-btn" id="export-data-btn">Export Data</button>
             <label for="import-file-input" class="options-btn">Import Data</label>
             <input type="file" id="import-file-input" accept=".json" style="display: none;">
         </div>
-        <div class="panel-footer">
-            <button id="import-export-back-btn">Back</button>
-        </div>
+        <div class="panel-footer"><button id="import-export-back-btn">Back</button></div>
     </div>
 
     <div id="medals-panel" class="panel">
-        <div class="panel-header">
-            <h2>Medal Room</h2>
-        </div>
+        <div class="panel-header"><h2>Medal Room</h2></div>
         <div class="panel-body">
             <div class="medals-list-header">
-                <div>Medal</div>
-                <div>Description</div>
-                <div>Collected</div>
+                <div>Medal</div><div>Description</div><div>Collected</div>
             </div>
-            <div id="medals-list-container">
-                </div>
+            <div id="medals-list-container"></div>
         </div>
-        <div class="panel-footer">
-            <button id="medals-back-btn">Back</button>
-        </div>
+        <div class="panel-footer"><button id="medals-back-btn">Back</button></div>
     </div>
     
     <div id="notifications-panel" class="panel">
@@ -305,6 +212,10 @@
             <h2>Notifications</h2>
         </div>
         <div class="panel-body">
+            <div id="ios-notification-message" style="display: none; text-align: center; padding: 2rem;">
+                <p>Reminders are not supported on iOS for web apps.</p>
+            </div>
+
             <div class="setting-row">
                 <label for="notifications-toggle">Remind me on scheduled days</label>
                 <label class="switch">
@@ -323,9 +234,7 @@
     </div>
 
     <div id="theme-panel" class="panel">
-        <div class="panel-header">
-            <h2>Custom Theme</h2>
-        </div>
+        <div class="panel-header"><h2>Custom Theme</h2></div>
         <div class="panel-body">
             <div class="theme-setting-row">
                 <label for="text-color-picker">Text</label>
@@ -344,11 +253,62 @@
                 <input type="color" id="background-color-picker" class="color-picker">
             </div>
         </div>
+        <div class="panel-footer"><button id="theme-back-btn">Back</button></div>
+    </div>
 
-        <div class="panel-footer">
-            <button id="theme-back-btn">Back</button>
+    <div id="install-banner">
+        <p>Add to your Home Screen for a better experience!</p>
+        <button id="install-btn">Install</button>
+        <button id="close-install-banner-btn" class="icon-btn">✕</button>
+    </div>
+
+    <div id="entry-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 id="modal-title">Enter Details for a Date</h2>
+            <div class="modal-body">
+                <div class="input-group">
+                    <div class="form-group">
+                        <label>Time</label>
+                        <div class="time-input-group">
+                            <input type="text" inputmode="numeric" id="time-hours-input" placeholder="Hours"><span>h</span>
+                            <input type="text" inputmode="numeric" id="time-minutes-input" placeholder="Mins"><span>min</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="studies-input"># of Studies</label>
+                        <input type="text" inputmode="numeric" id="studies-input">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="notes-input">Notes</label>
+                    <textarea id="notes-input" rows="4"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="modal-close-btn">Cancel</button>
+                <button id="modal-save-btn">Save</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="alert-modal" class="modal-overlay">
+        <div class="modal-content">
+            <p id="alert-message">Message Here</p>
+            <div class="modal-footer" style="justify-content: center;">
+                <button id="alert-ok-btn">OK</button>
+            </div>
         </div>
     </div>
 
+    <div id="ios-install-modal" class="modal-overlay">
+        <div class="modal-content">
+            <p class="ios-install-message">To install this app, tap the Share icon, then scroll down and select 'Add to Home Screen'.</p>
+            <div class="modal-footer" style="justify-content: center;">
+                <button id="ios-install-done-btn">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
 </body>
 </html>

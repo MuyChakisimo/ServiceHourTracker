@@ -1,4 +1,4 @@
-const CACHE_NAME = 'service-time-tracker-v3.3.4'; // Make sure to update this version number
+const CACHE_NAME = 'service-time-tracker-v3.5.7'; // Or your latest version
 const urlsToCache = [
     './',
     './index.html',
@@ -10,16 +10,15 @@ const urlsToCache = [
     './images/icon-512.png'
 ];
 
-// Store settings in memory
+// Store app settings in memory for quick access
 let appSettings = {};
 
-// Install the service worker and cache files
+// Install the service worker, cache files, and activate immediately
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME)
-        .then(cache => {
-            return cache.addAll(urlsToCache);
-        })
+        .then(cache => cache.addAll(urlsToCache))
+        .then(() => self.skipWaiting()) // <-- OPTIMIZATION: Activate new worker faster
     );
 });
 
@@ -38,17 +37,15 @@ self.addEventListener('activate', event => {
     );
 });
 
-// Serve cached files when offline
+// Serve cached files first for an offline-first experience
 self.addEventListener('fetch', event => {
     event.respondWith(
         caches.match(event.request)
-        .then(response => {
-            return response || fetch(event.request);
-        })
+        .then(response => response || fetch(event.request))
     );
 });
 
-// Listen for messages from the main app (e.g., settings updates)
+// Listen for settings updates from the main app
 self.addEventListener('message', event => {
     if (event.data && event.data.action === 'updateSettings') {
         appSettings = event.data.settings;
@@ -57,71 +54,59 @@ self.addEventListener('message', event => {
 
 // --- NOTIFICATION LOGIC ---
 
-// Main event for periodic checks (runs about once a day)
+// Listen for the daily periodic sync event
 self.addEventListener('periodicsync', event => {
     if (event.tag === 'check-reminder') {
         event.waitUntil(checkAndShowNotification());
     }
 });
 
+// Check if a notification should be sent
 async function checkAndShowNotification() {
-    if (!appSettings || !appSettings.notifications || !appSettings.notifications.enabled) {
-        return; // Notifications are disabled
-    }
+    if (!appSettings?.notifications?.enabled) return;
 
     const today = new Date();
-    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    // BUG FIX: Use lowercase day names to match the saved data format
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const todayName = dayNames[today.getDay()];
 
-    const schedule = appSettings.schedule || {};
-    const todaySchedule = schedule[todayName];
+    const todaySchedule = appSettings.schedule?.[todayName];
 
-    // Only proceed if today is a scheduled day with a time goal > 0
+    // Exit if today is not an active, scheduled day with a time goal > 0
     if (!todaySchedule || !todaySchedule.active || (todaySchedule.hours === 0 && todaySchedule.minutes === 0)) {
         return;
     }
 
-    const scheduledTotalMinutes = (todaySchedule.hours * 60) + todaySchedule.minutes;
-
-    // Get today's logged time from the database
-    // We need to fetch the database from the app via a message because the service worker doesn't have direct access.
-    // A simpler way for now is to assume the check runs close to the end of the day.
-    // A full implementation would require IndexedDB. This is a robust simplification.
-    // For now, let's just show a notification if the day is scheduled.
-    // In the next step, we'll refine this to check the actual logged time.
-
     const [reminderHour, reminderMinute] = appSettings.notifications.time.split(':').map(Number);
 
-    // Don't send notification if it's before the user's chosen time
+    // Exit if it's not yet time for the reminder
     if (today.getHours() < reminderHour || (today.getHours() === reminderHour && today.getMinutes() < reminderMinute)) {
         return;
     }
     
-    // For now, we'll send a simple reminder.
-    // The logic for checking logged time is complex without a shared database.
-    // This is the simplified, reliable version.
+    // If all checks pass, show the notification
     const options = {
-        body: 'Don\'t forget to register your time for today!',
+        body: "Don't forget to register your time for today!",
         icon: './images/icon-192.png',
-        actions: [{ action: 'edit-time', title: 'Add Time' }]
+        actions: [{ action: 'add-time', title: 'Add Time' }]
     };
+
     return self.registration.showNotification('Service Time Reminder', options);
 }
 
-
-// Handle what happens when a notification is clicked
+// Handle what happens when a user clicks the notification
 self.addEventListener('notificationclick', event => {
-    event.notification.close(); // Close the notification
+    event.notification.close();
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
-            // Check if there's a window open
+            // If the app is already open, focus it and open the modal
             if (clientList.length > 0) {
                 const client = clientList[0];
-                client.focus(); // Focus the existing window
+                client.focus();
                 client.postMessage({ action: 'open-modal-for-today' });
             } else {
-                // If no window is open, open a new one
+                // Otherwise, open the app
                 clients.openWindow('/');
             }
         })
