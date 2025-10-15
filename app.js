@@ -36,15 +36,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const optionsBtn = document.getElementById('options-btn');
     const optionsCloseBtn = document.getElementById('options-close-btn');
     const setGoalsBtn = document.getElementById('set-goals-btn');
-    const planScheduleBtn = document.getElementById('plan-schedule-btn');
     const viewMedalsBtn = document.getElementById('view-medals-btn');
     const shareOptionBtn = document.getElementById('share-option-btn');
     const sharePanel = document.getElementById('share-panel');
     const shareWithFriendBtn = document.getElementById('share-with-friend-btn');
     const shareBackBtn = document.getElementById('share-back-btn');
-    const schedulePanel = document.getElementById('schedule-panel');
-    const scheduleCancelBtn = document.getElementById('schedule-cancel-btn');
-    const scheduleSaveBtn = document.getElementById('schedule-save-btn');
     const goalPanel = document.getElementById('goal-panel');
     const goalPanelTitle = document.getElementById('goal-panel-title');
     const goalCancelBtn = document.getElementById('goal-cancel-btn');
@@ -74,7 +70,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const studiesInput = document.getElementById('studies-input');
     const notesInput = document.getElementById('notes-input');
 
+    // Add these selectors for the new planning UI
+    const planModeBtn = document.getElementById('plan-mode-btn');
+    const planningBar = document.getElementById('planning-bar');
+    const planPerDayBtn = document.getElementById('plan-per-day-btn');
+    const planPerMonthBtn = document.getElementById('plan-per-month-btn');
+    const clearPlansBtn = document.getElementById('clear-plans-btn');
+    const planningModal = document.getElementById('planning-modal');
+    const planningModalTitle = document.getElementById('planning-modal-title');
+    const planningHoursInput = document.getElementById('planning-hours-input');
+    const planningMinutesInput = document.getElementById('planning-minutes-input');
+    const planningModalDeleteBtn = document.getElementById('planning-modal-delete-btn');
+    const planningModalCloseBtn = document.getElementById('planning-modal-close-btn');
+    const planningModalSaveBtn = document.getElementById('planning-modal-save-btn');
+
     // --- STATE & DATABASE ---
+    
+    // Add these new state variables for planning mode
+    let isPlanningMode = false;
+    let planSubMode = 'per-day'; // 'per-day' or 'per-month'
+
     const defaultSettings = {
         monthGoal: 50,
         yearGoal: 600,
@@ -240,6 +255,9 @@ document.addEventListener('DOMContentLoaded', () => {
         currentMonthYearEl.textContent = currentDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
         calendarGridEl.innerHTML = '';
 
+        // Moved dayNames declaration to the top to fix the error
+        const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
@@ -266,21 +284,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 dayEl.classList.add('today');
             }
 
-            const dayOfWeek = dayDate.getDay();
-            const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-            const dayName = dayNames[dayOfWeek];
-            const daySchedule = settings.schedule[dayName] || {};
-            const plannedMinutes = (daySchedule.hours * 60) + (daySchedule.minutes || 0);
-            const actualMinutes = database[dateKey]?.time || 0;
+            if (dayDate > today) {
+                dayEl.classList.add('future-date');
+            }
 
-            if (plannedMinutes > 0) {
-                if (actualMinutes >= plannedMinutes) {
-                    dayEl.classList.add('complete');
-                } else if (dayDate < today) {
-                    dayEl.classList.add(actualMinutes > 0 ? 'under' : 'missed');
-                } else {
-                    dayEl.classList.add('future-planned');
-                }
+            const entry = database[dateKey] || {};
+            const plannedMinutes = entry.plannedTime || 0;
+            const actualMinutes = entry.time || 0;
+            
+            if (plannedMinutes > 0 && dayDate >= today) {
+                dayEl.classList.add('future-planned');
+            } else {
+                 const weeklySchedule = settings.schedule[dayNames[dayDate.getDay()]] || {};
+                 const weeklyPlannedMinutes = (weeklySchedule.hours * 60) + (weeklySchedule.minutes || 0);
+
+                 if (weeklyPlannedMinutes > 0 && dayDate < today) {
+                     if (actualMinutes >= weeklyPlannedMinutes) dayEl.classList.add('complete');
+                     else if (actualMinutes > 0) dayEl.classList.add('under');
+                     else dayEl.classList.add('missed');
+                 }
             }
 
             const dayHeader = document.createElement('div');
@@ -290,8 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
             dayNumber.textContent = i;
             dayHeader.appendChild(dayNumber);
 
-            const entry = database[dateKey];
-            if (entry?.notes?.trim()) {
+            if (entry.notes?.trim()) {
                 const noteIcon = document.createElement('span');
                 noteIcon.className = 'note-indicator';
                 noteIcon.textContent = '📝';
@@ -304,14 +325,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 const summary = document.createElement('div');
                 summary.className = 'day-summary';
                 let summaryContent = '';
-                if (plannedMinutes > 0) summaryContent += `🎯: ${formatMinutesToDisplay(plannedMinutes)}`;
-                if (plannedMinutes > 0 && actualMinutes > 0) summaryContent += '<hr class="day-summary-divider">';
-                if (actualMinutes > 0) summaryContent += `⏱️: ${formatMinutesToDisplay(actualMinutes)}`;
+                if (plannedMinutes > 0) {
+                    summaryContent += `🎯: ${formatMinutesToDisplay(plannedMinutes)}`;
+                }
+                if (plannedMinutes > 0 && actualMinutes > 0) {
+                    summaryContent += '<hr class="day-summary-divider">';
+                }
+                if (actualMinutes > 0) {
+                    summaryContent += `⏱️: ${formatMinutesToDisplay(actualMinutes)}`;
+                }
                 summary.innerHTML = summaryContent;
                 dayEl.appendChild(summary);
             }
             fragment.appendChild(dayEl);
         }
+        
         calendarGridEl.appendChild(fragment);
         updateSummary();
     }
@@ -564,46 +592,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function openSchedulePanel() {
-        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        days.forEach(day => {
-            const dayKey = day.toLowerCase();
-            const dayData = settings.schedule[dayKey] || {};
-            const checkbox = document.querySelector(`#schedule-check-${dayKey}`);
-            const hoursInput = document.getElementById(`schedule-hours-${dayKey}`);
-            const minutesInput = document.getElementById(`schedule-minutes-${dayKey}`);
-            if (checkbox) checkbox.checked = dayData.active || false;
-            if (hoursInput) hoursInput.value = dayData.hours || '';
-            if (minutesInput) minutesInput.value = dayData.minutes || '';
-        });
-        schedulePanel.classList.add('visible');
-    }
-    
-    function closeSchedulePanel() {
-        schedulePanel.classList.remove('visible');
-    }
-    
-    function saveSchedule() {
-        const newSchedule = {};
-        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        days.forEach(day => {
-            const dayKey = day.toLowerCase();
-            const checkbox = document.querySelector(`#schedule-check-${dayKey}`);
-            const hours = parseInt(document.getElementById(`schedule-hours-${dayKey}`).value) || 0;
-            const minutes = parseInt(document.getElementById(`schedule-minutes-${dayKey}`).value) || 0;
-            
-            newSchedule[dayKey] = { 
-                active: checkbox.checked, 
-                hours: checkbox.checked ? hours : 0, 
-                minutes: checkbox.checked ? minutes : 0 
-            };
-        });
-        settings.schedule = newSchedule;
-        saveSettings();
-        renderCalendar();
-        closeSchedulePanel();
-    }
-
     function openGoalPanel() {
         monthlyGoalInput.value = settings.monthGoal;
         yearlyGoalInput.value = settings.yearGoal;
@@ -630,6 +618,133 @@ document.addEventListener('DOMContentLoaded', () => {
         closeGoalPanel();
     }
 
+    // --- NEW PLANNING MODE FUNCTIONS ---
+
+    function togglePlanningMode() {
+        isPlanningMode = !isPlanningMode;
+        
+        // Toggle UI elements
+        document.body.classList.toggle('planning-mode-active');
+        planningBar.classList.toggle('visible');
+        planModeBtn.classList.toggle('active');
+        
+        // Enable/disable options button (as requested)
+        optionsBtn.disabled = isPlanningMode;
+
+        // Reset sub-mode to default when turning on
+        if (isPlanningMode) {
+            setPlanSubMode('per-day');
+        }
+
+        renderCalendar(); // Re-render to show/hide planning visuals
+    }
+
+    function setPlanSubMode(mode) {
+        planSubMode = mode;
+        planPerDayBtn.classList.toggle('active', mode === 'per-day');
+        planPerMonthBtn.classList.toggle('active', mode === 'per-month');
+    }
+
+    function openPlanningModal(dateKey) {
+        document.body.classList.add('modal-open');
+        currentlyEditingDate = dateKey;
+        const entry = database[dateKey] || {};
+        const plannedMinutes = entry.plannedTime || 0;
+
+        planningHoursInput.value = plannedMinutes > 0 ? Math.floor(plannedMinutes / 60) : '';
+        planningMinutesInput.value = plannedMinutes > 0 ? plannedMinutes % 60 : '';
+
+        const dateObj = new Date(dateKey + 'T00:00:00');
+        planningModalTitle.textContent = `Plan time for ${dateObj.toLocaleString('en-US', { month: 'long', day: 'numeric' })}`;
+
+        // Change save button text based on sub-mode
+        if (planSubMode === 'per-month') {
+            const dayName = dateObj.toLocaleString('en-US', { weekday: 'long' });
+            planningModalSaveBtn.textContent = `Apply to future ${dayName}s`;
+        } else {
+            planningModalSaveBtn.textContent = 'Save Plan';
+        }
+
+        planningModal.classList.add('visible');
+        planningHoursInput.focus();
+    }
+
+    function closePlanningModal() {
+        document.body.classList.remove('modal-open');
+        planningModal.classList.remove('visible');
+        currentlyEditingDate = null;
+    }
+
+    function savePlanningModalData() {
+        if (!currentlyEditingDate) return;
+
+        const hours = parseInt(planningHoursInput.value) || 0;
+        const minutes = parseInt(planningMinutesInput.value) || 0;
+        const totalMinutesToPlan = (hours * 60) + minutes;
+
+        if (planSubMode === 'per-day') {
+            // --- Per Day Logic ---
+            if (!database[currentlyEditingDate]) database[currentlyEditingDate] = {};
+            database[currentlyEditingDate].plannedTime = totalMinutesToPlan;
+        } else {
+            // --- Per Month Logic ---
+            const targetDate = new Date(currentlyEditingDate + 'T00:00:00');
+            const targetDayOfWeek = targetDate.getDay();
+            const year = targetDate.getFullYear();
+            const month = targetDate.getMonth();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            // Loop through all future days in the month
+            for (let i = targetDate.getDate(); i <= daysInMonth; i++) {
+                const day = new Date(year, month, i);
+                if (day.getDay() === targetDayOfWeek) {
+                    const dateKey = day.toISOString().split('T')[0];
+                    // Only add plan if one doesn't already exist (as requested)
+                    if (!database[dateKey]?.plannedTime) {
+                        if (!database[dateKey]) database[dateKey] = {};
+                        database[dateKey].plannedTime = totalMinutesToPlan;
+                    }
+                }
+            }
+        }
+        
+        saveData();
+        renderCalendar();
+        closePlanningModal();
+    }
+
+    function deleteSinglePlan() {
+        if (!currentlyEditingDate) return;
+        if (database[currentlyEditingDate] && database[currentlyEditingDate].plannedTime) {
+            delete database[currentlyEditingDate].plannedTime;
+            saveData();
+            renderCalendar();
+        }
+        closePlanningModal();
+    }
+    
+    function clearAllPlansForMonth() {
+        // Show a confirmation before clearing (as requested)
+        if (!confirm(`Are you sure you want to clear all plans for ${currentDate.toLocaleString('en-US', {month: 'long'})}?`)) {
+            return;
+        }
+
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+
+        for (const dateKey in database) {
+            const entryDate = new Date(dateKey + 'T00:00:00');
+            if (entryDate.getFullYear() === year && entryDate.getMonth() === month) {
+                if (database[dateKey].plannedTime) {
+                    delete database[dateKey].plannedTime;
+                }
+            }
+        }
+        saveData();
+        renderCalendar();
+        openAlertModal('All plans for the month have been cleared.');
+    }
+
     // --- EVENT LISTENERS & INITIALIZATION ---
     function setupEventListeners() {
         // Helper function to safely add listeners
@@ -637,7 +752,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (element) {
                 element.addEventListener(event, handler);
             } else {
-                // If an element is missing, log an error to help debug
                 console.error(`Error: Element not found for an event listener. Check your HTML and JS!`);
             }
         };
@@ -645,8 +759,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Panel Navigation ---
         safeAddEventListener(optionsBtn, 'click', openOptionsPanel);
         safeAddEventListener(optionsCloseBtn, 'click', closeOptionsPanel);
-        safeAddEventListener(planScheduleBtn, 'click', openSchedulePanel);
-        safeAddEventListener(scheduleCancelBtn, 'click', closeSchedulePanel);
         safeAddEventListener(setGoalsBtn, 'click', openGoalPanel);
         safeAddEventListener(goalCancelBtn, 'click', closeGoalPanel);
         safeAddEventListener(viewMedalsBtn, 'click', openMedalsPanel);
@@ -660,8 +772,19 @@ document.addEventListener('DOMContentLoaded', () => {
         safeAddEventListener(importExportBtn, 'click', openImportExportPanel);
         safeAddEventListener(importExportBackBtn, 'click', closeImportExportPanel);
 
+        // --- NEW Planning Mode Listeners ---
+        safeAddEventListener(planModeBtn, 'click', togglePlanningMode);
+        safeAddEventListener(planPerDayBtn, 'click', () => setPlanSubMode('per-day'));
+        safeAddEventListener(planPerMonthBtn, 'click', () => setPlanSubMode('per-month'));
+        safeAddEventListener(clearPlansBtn, 'click', clearAllPlansForMonth);
+        safeAddEventListener(planningModalCloseBtn, 'click', closePlanningModal);
+        safeAddEventListener(planningModalSaveBtn, 'click', savePlanningModalData);
+        safeAddEventListener(planningModalDeleteBtn, 'click', deleteSinglePlan);
+        safeAddEventListener(planningModal, 'click', (event) => {
+            if (event.target === planningModal) closePlanningModal();
+        });
+
         // --- Data Actions ---
-        safeAddEventListener(scheduleSaveBtn, 'click', saveSchedule);
         safeAddEventListener(goalSaveBtn, 'click', saveGoals);
         safeAddEventListener(modalSaveBtn, 'click', saveModalData);
         safeAddEventListener(exportDataBtn, 'click', exportData);
@@ -697,10 +820,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         safeAddEventListener(calendarGridEl, 'click', (event) => {
             const dayElement = event.target.closest('.calendar-day');
-            if (dayElement && !dayElement.classList.contains('padding')) {
-                openModal(dayElement.dataset.date);
+            if (!dayElement || dayElement.classList.contains('padding')) return;
+
+            const dateKey = dayElement.dataset.date;
+            
+            if (isPlanningMode) {
+                // In Planning Mode, only allow clicks on future dates
+                const dayDate = new Date(dateKey + 'T00:00:00');
+                const today = new Date();
+                today.setHours(0,0,0,0);
+
+                if (dayDate >= today) {
+                    openPlanningModal(dateKey);
+                }
+                // If the date is in the past, do nothing.
+            } else {
+                // In Logging Mode, all days are clickable
+                openModal(dateKey);
             }
         });
+        
         safeAddEventListener(modalCloseBtn, 'click', closeModal);
         safeAddEventListener(modal, 'click', (event) => {
             if (event.target === modal) closeModal();

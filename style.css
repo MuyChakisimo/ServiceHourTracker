@@ -483,8 +483,7 @@ label.options-btn {
 }
 
 body.modal-open {
-    position: fixed;
-    width: 100%;
+    overflow: hidden; /* This is the fix */
 }
 
 /* --- FORMS & INPUTS --- */
@@ -741,4 +740,74 @@ input:checked + .slider:before {
     .calendar-day {
         padding: 8px;
     }
+}
+
+/* --- PLANNING MODE STYLES --- */
+
+#planning-bar {
+    background-color: var(--card-bg-color);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    overflow: hidden;
+    max-height: 0; /* Initially hidden */
+    transition: max-height 0.4s ease-in-out, padding 0.4s ease-in-out;
+}
+
+#planning-bar.visible {
+    max-height: 100px; /* Animate to this height */
+    padding: 0.5rem 1rem;
+}
+
+.planning-bar-label {
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+.planning-bar-options {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.plan-mode-option {
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.plan-mode-option.active {
+    background-color: var(--status-blue);
+    border-color: var(--status-blue);
+    color: var(--text-color-inverted);
+    box-shadow: 0 0 8px var(--status-blue);
+}
+
+#clear-plans-btn {
+    border-color: var(--status-red);
+    color: var(--status-red);
+}
+
+#plan-mode-btn.active {
+    color: var(--status-blue);
+    text-shadow: 0 0 8px var(--status-blue);
+}
+
+/* Disable the options button when planning */
+#options-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* Add a blue glow to future, non-planned days to show they are selectable */
+/* When in planning mode, make future days glow and have a pointer cursor */
+.planning-mode-active .calendar-day.future-date {
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.7); /* The glow */
+    cursor: pointer;                             /* The hand icon on hover */
 }

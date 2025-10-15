@@ -34,12 +34,22 @@
         <div class="container">
             <header>
                 <button class="icon-btn" id="options-btn">☰</button>
-                <div class="month-display">
-                    <button class="nav-btn" id="prev-month-btn">◀</button>
-                    <h1 id="current-month-year">October 2025</h1>
-                    <button class="nav-btn" id="next-month-btn">▶</button>
+                    <div class="month-display">
+                        <button class="nav-btn" id="prev-month-btn">◀</button>
+                        <h1 id="current-month-year">October 2025</h1>
+                        <button class="nav-btn" id="next-month-btn">▶</button>
+                    </div>
+                <button class="icon-btn" id="plan-mode-btn">🗓️</button>
+            </header>
+
+            <div id="planning-bar">
+                <div class="planning-bar-label">Planning Mode</div>
+                <div class="planning-bar-options">
+                    <button id="plan-per-day-btn" class="plan-mode-option active">Per Day</button>
+                    <button id="plan-per-month-btn" class="plan-mode-option">Per Month</button>
+                    <button id="clear-plans-btn" class="plan-mode-option">Clear Plans</button>
                 </div>
-                </header>
+            </div>
 
             <main>
                 <div id="calendar-weekdays">
@@ -88,13 +98,12 @@
         <button id="options-close-btn" class="icon-btn">✕</button>
         <h2>Options</h2>
         <button class="options-btn" id="set-goals-btn">Set Goals</button>
-        <button class="options-btn" id="plan-schedule-btn">Plan a Schedule</button>
         <button class="options-btn" id="notifications-btn">Notifications</button>
         <button class="options-btn" id="view-medals-btn">View Medals</button>
         <button class="options-btn" id="theme-btn">Custom Theme</button>
         <button class="options-btn" id="share-option-btn">Share Option</button>
         <button class="options-btn" id="import-export-btn">Import / Export Data</button>
-        <div class="version-number">Created by Omar Rivas V.3.5.8</div>
+        <div class="version-number">Created by Omar Rivas V.4.6.0</div>
     </nav>
 
     <div id="share-panel" class="panel">
@@ -106,7 +115,6 @@
     </div>
 
     <div id="schedule-panel" class="panel">
-        <div class="panel-header"><h2>Plan Your Weekly Schedule</h2></div>
         <div class="panel-body">
             <div class="schedule-row">
                 <label for="schedule-check-sunday"><input type="checkbox" id="schedule-check-sunday" data-day="Sunday"> Sunday</label>
@@ -157,7 +165,14 @@
                     <input type="text" inputmode="numeric" id="schedule-minutes-saturday" placeholder="M"><span>m</span>
                 </div>
             </div>
+
+            <div class="schedule-actions">
+                <hr>
+                <button class="options-btn" id="apply-schedule-btn">Apply Weekly Schedule to Month</button>
+                <button class="options-btn" id="clear-plans-btn">Clear All Planned Days for Month</button>
+            </div>
         </div>
+
         <div class="panel-footer">
             <button id="schedule-cancel-btn">Cancel</button>
             <button id="schedule-save-btn">Save Schedule</button>
@@ -305,6 +320,26 @@
             <p class="ios-install-message">To install this app, tap the Share icon, then scroll down and select 'Add to Home Screen'.</p>
             <div class="modal-footer" style="justify-content: center;">
                 <button id="ios-install-done-btn">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="planning-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 id="planning-modal-title">Plan Time for a Date</h2>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Planned Time</label>
+                    <div class="time-input-group">
+                        <input type="text" inputmode="numeric" id="planning-hours-input" placeholder="Hours"><span>h</span>
+                        <input type="text" inputmode="numeric" id="planning-minutes-input" placeholder="Mins"><span>min</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="planning-modal-delete-btn" style="margin-right: auto;">Clear Plan</button>
+                <button id="planning-modal-close-btn">Cancel</button>
+                <button id="planning-modal-save-btn">Save Plan</button>
             </div>
         </div>
     </div>

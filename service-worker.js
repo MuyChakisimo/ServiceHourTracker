@@ -1,4 +1,4 @@
-const CACHE_NAME = 'service-time-tracker-v3.5.8'; // Or your latest version
+const CACHE_NAME = 'service-time-tracker-v4.6.0'; // Or your latest version
 const urlsToCache = [
     './',
     './index.html',
