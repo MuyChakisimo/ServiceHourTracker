@@ -2,348 +2,382 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Service Time Tracker</title>
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <meta name="description" content="Track monthly and service-year service time, studies, notes and plans.">
+    <meta name="theme-color" content="#0d0019">
+    <link rel="icon" href="favicon.ico" sizes="any">
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#000000">
-
-    <script>
-        (function() {
-            try {
-                const settingsStr = localStorage.getItem('serviceTimeTrackerSettings');
-                if (settingsStr) {
-                    const settings = JSON.parse(settingsStr);
-                    if (settings.customTheme) {
-                        const theme = settings.customTheme;
-                        const root = document.documentElement;
-                        root.style.setProperty('--text-color', theme['--text-color']);
-                        root.style.setProperty('--card-bg-color', theme['--card-bg-color']);
-                        root.style.setProperty('--border-color', theme['--border-color']);
-                        root.style.setProperty('--background-color', theme['--background-color']);
-                    }
-                }
-            } catch (e) { console.error('Error preloading theme:', e); }
-        })();
-    </script>
-
+    <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Time Tracker">
+    <!-- Applies the saved theme before first paint -->
+    <script src="js/theme.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="main-content">
-        <div class="container">
-            <header>
-                <button class="icon-btn" id="options-btn">☰</button>
-                    <div class="month-display">
-                        <button class="nav-btn" id="prev-month-btn">◀</button>
-                        <h1 id="current-month-year">October 2025</h1>
-                        <button class="nav-btn" id="next-month-btn">▶</button>
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></symbol>
+        <symbol id="i-prev" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></symbol>
+        <symbol id="i-next" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" /></symbol>
+        <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></symbol>
+        <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" /></symbol>
+        <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" /></symbol>
+        <symbol id="i-goal" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" /><circle cx="12" cy="12" r="4.5" /><circle cx="12" cy="12" r="0.8" /></symbol>
+        <symbol id="i-history" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4.5v4h4" /><path d="M12 8v4.5l3 2" /></symbol>
+        <symbol id="i-week" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5" /><path d="M3.5 10h17M8 3v4M16 3v4" /></symbol>
+        <symbol id="i-medal" viewBox="0 0 24 24"><path d="M8 3h8l-2 6h-4zM7.5 3L10 9M16.5 3L14 9" /><circle cx="12" cy="15" r="5.5" /></symbol>
+        <symbol id="i-theme" viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 1 0 0 17c1.2 0 1.8-.9 1.4-1.9-.5-1.2.2-2.3 1.5-2.3h1.8a3.8 3.8 0 0 0 3.8-3.8C20.5 7.2 16.7 3.5 12 3.5z" /><circle cx="7.8" cy="11" r="1" /><circle cx="10.5" cy="7.6" r="1" /><circle cx="14.8" cy="7.9" r="1" /></symbol>
+        <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3.5v11M7.5 8L12 3.5 16.5 8M5 12.5v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" /></symbol>
+        <symbol id="i-data" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.5" ry="2.8" /><path d="M4.5 6v12c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8V6M4.5 12c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8" /></symbol>
+    </svg>
+
+    <div class="app" id="app">
+        <header class="topbar">
+            <button class="icon-btn" id="menu-btn" type="button" aria-label="Open menu" aria-haspopup="dialog">
+                <svg class="icon"><use href="#i-menu" /></svg>
+            </button>
+            <div class="month-nav">
+                <button class="icon-btn" id="prev-month-btn" type="button" aria-label="Previous month">
+                    <svg class="icon"><use href="#i-prev" /></svg>
+                </button>
+                <h1 id="month-title" aria-live="polite"><span class="t-long"></span><span class="t-short" aria-hidden="true"></span></h1>
+                <button class="icon-btn" id="next-month-btn" type="button" aria-label="Next month">
+                    <svg class="icon"><use href="#i-next" /></svg>
+                </button>
+            </div>
+            <div class="topbar-actions">
+                <button class="pill-btn" id="today-btn" type="button" aria-label="Jump to today">Today</button>
+                <button class="icon-btn" id="plan-mode-btn" type="button" aria-pressed="false" aria-label="Edit mode: plan service">
+                    <span class="emoji-icon" aria-hidden="true">✏️</span>
+                </button>
+            </div>
+        </header>
+
+        <div id="planning-bar" class="planning-bar" hidden>
+            <div class="planning-bar-row">
+                <span class="planning-label"><span class="em" aria-hidden="true">✏️</span><span class="planning-text">Planning</span></span>
+                <div class="segmented" role="group" aria-label="Planning scope">
+                    <button type="button" id="plan-per-day-btn" aria-pressed="true">Per Day</button>
+                    <button type="button" id="plan-per-month-btn" aria-pressed="false">Per Month</button>
+                </div>
+                <button type="button" id="clear-plans-btn" class="text-btn danger">Clear Plans</button>
+            </div>
+            <p id="planning-hint" class="planning-hint">Tap a day to set its target.</p>
+        </div>
+
+        <main class="calendar" aria-label="Calendar">
+            <div id="calendar-weekdays" class="weekdays"></div>
+            <div id="calendar-grid" class="grid"></div>
+        </main>
+
+        <section class="summaries" aria-label="Summary">
+            <article class="summary-card" id="month-card">
+                <h2 class="card-title" id="month-card-title">This Month</h2>
+                <dl class="stats">
+                    <div><dt><span class="em" aria-hidden="true">⏱️</span>Total</dt><dd id="month-total">0h</dd></div>
+                    <div><dt><span class="em" aria-hidden="true">👨🏽‍🏫</span>Studies</dt><dd id="month-studies">0</dd></div>
+                    <div><dt><span class="em" aria-hidden="true">🎯</span>Goal</dt><dd id="month-goal">0h</dd></div>
+                    <div><dt><span class="em" aria-hidden="true">🤔</span>Planned</dt><dd id="month-planned">0h</dd></div>
+                    <div><dt><span class="em" aria-hidden="true">⏳</span><span id="month-left-label">Left</span></dt><dd id="month-left">0h</dd></div>
+                </dl>
+                <div class="progress">
+                    <div class="track" role="progressbar" aria-labelledby="month-card-title" aria-valuemin="0" aria-valuemax="100" id="month-progress">
+                        <div class="fill" id="month-progress-fill"></div>
+                        <span class="pct" id="month-progress-text">0%</span>
                     </div>
-                <button class="icon-btn" id="plan-mode-btn">🗓️</button>
-            </header>
-
-            <div id="planning-bar">
-                <div class="planning-bar-label">Planning Mode</div>
-                <div class="planning-bar-options">
-                    <button id="plan-per-day-btn" class="plan-mode-option active">Per Day</button>
-                    <button id="plan-per-month-btn" class="plan-mode-option">Per Month</button>
-                    <button id="clear-plans-btn" class="plan-mode-option">Clear Plans</button>
+                    <span class="goal-emoji" id="month-goal-emoji" role="img" aria-label="Monthly goal not reached yet">👍</span>
                 </div>
-            </div>
-
-            <main>
-                <div id="calendar-weekdays">
-                    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-                </div>
-                <div id="calendar-grid"></div>
-            </main>
-
-            <footer>
-                <div class="summary-grid">
-                    <div class="summary-box">
-                        <h3>This Month</h3>
-                        <p>⏱️ Total: <span id="month-total-hours">0</span></p>
-                        <p>🧑‍🏫 Studies: <span id="month-total-studies">0</span></p>
-                        <hr>
-                        <p>🎯 Goal: <span id="month-goal">0</span>h</p>
-                        <p>⏳ Left: <span id="month-time-left">0</span></p>
-                        <div class="progress-container">
-                            <div class="progress-bar-track">
-                                <div id="month-progress-bar" class="progress-bar-fill"></div>
-                                <span id="month-progress-text" class="progress-bar-text">0%</span>
-                            </div>
-                            <span id="month-goal-emoji" class="goal-emoji">👍</span>
-                        </div>
-                    </div>
-                    <div class="summary-box">
-                        <h3 id="service-year-title">Service Year</h3>
-                        <p class="service-year-dates">(Sep. 1st - Aug. 31st)</p>
-                        <p>🎯 Goal: <span id="year-goal">0</span>h</p>
-                        <p>⏱️ Total: <span id="year-accumulated-hours">0</span></p>
-                        <p>⏳ Left: <span id="year-remaining-hours">0</span></p>
-                        <div class="progress-container">
-                            <div class="progress-bar-track">
-                                <div id="year-progress-bar" class="progress-bar-fill"></div>
-                                <span id="year-progress-text" class="progress-bar-text">0%</span>
-                            </div>
-                            <span id="year-goal-emoji" class="goal-emoji">🏆</span>
-                        </div>
-                    </div>
-                </div>
-            </footer>
-        </div>
+            </article>
+            <button type="button" class="summary-card as-button" id="year-card" aria-describedby="year-card-hint">
+                <span class="card-title" id="year-card-title">Service Year</span>
+                <span class="card-sub" id="year-card-range"></span>
+                <span class="stats">
+                    <span><span class="dt"><span class="em" aria-hidden="true">🎯</span>Goal</span><span class="dd" id="year-goal">0h</span></span>
+                    <span><span class="dt"><span class="em" aria-hidden="true">⏱️</span>Total</span><span class="dd" id="year-total">0h</span></span>
+                    <span><span class="dt"><span class="em" aria-hidden="true">⏳</span><span id="year-left-label">Left</span></span><span class="dd" id="year-left">0h</span></span>
+                </span>
+                <span class="progress">
+                    <span class="track" role="progressbar" aria-labelledby="year-card-title" aria-valuemin="0" aria-valuemax="100" id="year-progress">
+                        <span class="fill" id="year-progress-fill"></span>
+                        <span class="pct" id="year-progress-text">0%</span>
+                    </span>
+                    <span class="goal-emoji" id="year-goal-emoji" role="img" aria-label="Service year goal not reached yet">🏆</span>
+                </span>
+                <span class="visually-hidden" id="year-card-hint">Opens this service year in Service History</span>
+            </button>
+        </section>
     </div>
 
-    <nav id="options-panel">
-        <button id="options-close-btn" class="icon-btn">✕</button>
-        <h2>Options</h2>
-        <button class="options-btn" id="set-goals-btn">Set Goals</button>
-        <button class="options-btn" id="notifications-btn">Notifications</button>
-        <button class="options-btn" id="view-medals-btn">View Medals</button>
-        <button class="options-btn" id="theme-btn">Custom Theme</button>
-        <button class="options-btn" id="share-option-btn">Share Option</button>
-        <button class="options-btn" id="import-export-btn">Import / Export Data</button>
-        <div class="version-number">Created by Omar Rivas V.4.6.1</div>
-    </nav>
-
-    <div id="share-panel" class="panel">
-        <div class="panel-header"><h2>Share Options</h2></div>
-        <div class="panel-body">
-            <button class="options-btn" id="share-with-friend-btn">Share App with a Friend</button>
-        </div>
-        <div class="panel-footer"><button id="share-back-btn">Back</button></div>
+    <!-- Toasts and banners (outside dialogs) -->
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+    <div id="app-banner" class="app-banner" role="region" aria-label="Notice" hidden>
+        <p id="app-banner-text"></p>
+        <button type="button" id="app-banner-action" class="btn primary small"></button>
+        <button type="button" id="app-banner-close" class="icon-btn small" aria-label="Dismiss">
+            <svg class="icon"><use href="#i-close" /></svg>
+        </button>
     </div>
 
-    <div id="schedule-panel" class="panel">
-        <div class="panel-body">
-            <div class="schedule-row">
-                <label for="schedule-check-sunday"><input type="checkbox" id="schedule-check-sunday" data-day="Sunday"> Sunday</label>
-                <div class="time-input-group">
-                    <input type="text" inputmode="numeric" id="schedule-hours-sunday" placeholder="H"><span>h</span>
-                    <input type="text" inputmode="numeric" id="schedule-minutes-sunday" placeholder="M"><span>m</span>
-                </div>
+    <!-- Menu drawer -->
+    <dialog id="menu" class="drawer" aria-labelledby="menu-title">
+        <div class="drawer-inner">
+            <div class="drawer-head">
+                <h2 id="menu-title">Menu</h2>
+                <button type="button" class="icon-btn" data-close aria-label="Close menu"><svg class="icon"><use href="#i-close" /></svg></button>
             </div>
-            <div class="schedule-row">
-                <label for="schedule-check-monday"><input type="checkbox" id="schedule-check-monday" data-day="Monday"> Monday</label>
-                <div class="time-input-group">
-                    <input type="text" inputmode="numeric" id="schedule-hours-monday" placeholder="H"><span>h</span>
-                    <input type="text" inputmode="numeric" id="schedule-minutes-monday" placeholder="M"><span>m</span>
-                </div>
-            </div>
-            <div class="schedule-row">
-                <label for="schedule-check-tuesday"><input type="checkbox" id="schedule-check-tuesday" data-day="Tuesday"> Tuesday</label>
-                <div class="time-input-group">
-                    <input type="text" inputmode="numeric" id="schedule-hours-tuesday" placeholder="H"><span>h</span>
-                    <input type="text" inputmode="numeric" id="schedule-minutes-tuesday" placeholder="M"><span>m</span>
-                </div>
-            </div>
-            <div class="schedule-row">
-                <label for="schedule-check-wednesday"><input type="checkbox" id="schedule-check-wednesday" data-day="Wednesday"> Wednesday</label>
-                <div class="time-input-group">
-                    <input type="text" inputmode="numeric" id="schedule-hours-wednesday" placeholder="H"><span>h</span>
-                    <input type="text" inputmode="numeric" id="schedule-minutes-wednesday" placeholder="M"><span>m</span>
-                </div>
-            </div>
-            <div class="schedule-row">
-                <label for="schedule-check-thursday"><input type="checkbox" id="schedule-check-thursday" data-day="Thursday"> Thursday</label>
-                <div class="time-input-group">
-                    <input type="text" inputmode="numeric" id="schedule-hours-thursday" placeholder="H"><span>h</span>
-                    <input type="text" inputmode="numeric" id="schedule-minutes-thursday" placeholder="M"><span>m</span>
-                </div>
-            </div>
-            <div class="schedule-row">
-                <label for="schedule-check-friday"><input type="checkbox" id="schedule-check-friday" data-day="Friday"> Friday</label>
-                <div class="time-input-group">
-                    <input type="text" inputmode="numeric" id="schedule-hours-friday" placeholder="H"><span>h</span>
-                    <input type="text" inputmode="numeric" id="schedule-minutes-friday" placeholder="M"><span>m</span>
-                </div>
-            </div>
-            <div class="schedule-row">
-                <label for="schedule-check-saturday"><input type="checkbox" id="schedule-check-saturday" data-day="Saturday"> Saturday</label>
-                <div class="time-input-group">
-                    <input type="text" inputmode="numeric" id="schedule-hours-saturday" placeholder="H"><span>h</span>
-                    <input type="text" inputmode="numeric" id="schedule-minutes-saturday" placeholder="M"><span>m</span>
-                </div>
-            </div>
-
-            <div class="schedule-actions">
-                <hr>
-                <button class="options-btn" id="apply-schedule-btn">Apply Weekly Schedule to Month</button>
-                <button class="options-btn" id="clear-plans-btn">Clear All Planned Days for Month</button>
-            </div>
-        </div>
-
-        <div class="panel-footer">
-            <button id="schedule-cancel-btn">Cancel</button>
-            <button id="schedule-save-btn">Save Schedule</button>
-        </div>
-    </div>
-
-    <div id="goal-panel" class="panel">
-        <div class="panel-header"><h2 id="goal-panel-title">Set your goal for:</h2></div>
-        <div class="panel-body">
-            <div class="goal-row">
-                <label for="monthly-goal-input">the Month:</label>
-                <div class="time-input-group">
-                    <input type="number" inputmode="numeric" id="monthly-goal-input"><span>h</span>
-                </div>
-            </div>
-            <div class="goal-row">
-                <label for="yearly-goal-input">the Year:</label>
-                <div class="time-input-group">
-                    <input type="number" inputmode="numeric" id="yearly-goal-input"><span>h</span>
-                </div>
-            </div>
-        </div>
-        <div class="panel-footer">
-            <button id="goal-cancel-btn">Cancel</button>
-            <button id="goal-save-btn">Save Goals</button>
-        </div>
-    </div>
-
-    <div id="import-export-panel" class="panel">
-        <div class="panel-header"><h2>Import / Export Data</h2></div>
-        <div class="panel-body">
-            <button class="options-btn" id="export-data-btn">Export Data</button>
-            <label for="import-file-input" class="options-btn">Import Data</label>
-            <input type="file" id="import-file-input" accept=".json" style="display: none;">
-        </div>
-        <div class="panel-footer"><button id="import-export-back-btn">Back</button></div>
-    </div>
-
-    <div id="medals-panel" class="panel">
-        <div class="panel-header"><h2>Medal Room</h2></div>
-        <div class="panel-body">
-            <div class="medals-list-header">
-                <div>Medal</div><div>Description</div><div>Collected</div>
-            </div>
-            <div id="medals-list-container"></div>
-        </div>
-        <div class="panel-footer"><button id="medals-back-btn">Back</button></div>
-    </div>
-    
-    <div id="notifications-panel" class="panel">
-        <div class="panel-header">
-            <h2>Notifications</h2>
-        </div>
-        <div class="panel-body">
-            <div id="ios-notification-message" style="display: none; text-align: center; padding: 2rem;">
-                <p>Reminders are not supported on iOS for web apps.</p>
-            </div>
-
-            <div class="setting-row">
-                <label for="notifications-toggle">Remind me on scheduled days</label>
-                <label class="switch">
-                    <input type="checkbox" id="notifications-toggle">
-                    <span class="slider round"></span>
-                </label>
-            </div>
-            <div class="setting-row">
-                <label for="notification-time">Remind me at</label>
-                <input type="time" id="notification-time">
-            </div>
-        </div>
-        <div class="panel-footer">
-            <button id="notifications-back-btn">Back</button>
-        </div>
-    </div>
-
-    <div id="theme-panel" class="panel">
-        <div class="panel-header"><h2>Custom Theme</h2></div>
-        <div class="panel-body">
-            <div class="theme-setting-row">
-                <label for="text-color-picker">Text</label>
-                <input type="color" id="text-color-picker" class="color-picker">
-            </div>
-            <div class="theme-setting-row">
-                <label for="card-bg-color-picker">Text Background</label>
-                <input type="color" id="card-bg-color-picker" class="color-picker">
-            </div>
-            <div class="theme-setting-row">
-                <label for="border-color-picker">Outlines</label>
-                <input type="color" id="border-color-picker" class="color-picker">
-            </div>
-            <div class="theme-setting-row">
-                <label for="background-color-picker">Background</label>
-                <input type="color" id="background-color-picker" class="color-picker">
-            </div>
-        </div>
-        <div class="panel-footer"><button id="theme-back-btn">Back</button></div>
-    </div>
-
-    <div id="install-banner">
-        <p>Add to your Home Screen for a better experience!</p>
-        <button id="install-btn">Install</button>
-        <button id="close-install-banner-btn" class="icon-btn">✕</button>
-    </div>
-
-    <div id="entry-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h2 id="modal-title">Enter Details for a Date</h2>
-            <div class="modal-body">
-                <div class="input-group">
-                    <div class="form-group">
-                        <label>Time</label>
-                        <div class="time-input-group">
-                            <input type="text" inputmode="numeric" id="time-hours-input" placeholder="Hours"><span>h</span>
-                            <input type="text" inputmode="numeric" id="time-minutes-input" placeholder="Mins"><span>min</span>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="studies-input"># of Studies</label>
-                        <input type="text" inputmode="numeric" id="studies-input">
+            <nav class="menu-list">
+                <button type="button" class="menu-item" data-open="goals-panel"><svg class="icon"><use href="#i-goal" /></svg><span>Set Goals / Service Year</span><svg class="icon chev"><use href="#i-chev" /></svg></button>
+                <button type="button" class="menu-item" data-open="history-panel"><svg class="icon"><use href="#i-history" /></svg><span>Service History</span><svg class="icon chev"><use href="#i-chev" /></svg></button>
+                <div class="menu-item static">
+                    <svg class="icon"><use href="#i-week" /></svg><span id="week-start-label">Week Starts On</span>
+                    <div class="segmented small" role="group" aria-labelledby="week-start-label">
+                        <button type="button" data-week-start="0" aria-pressed="true">Sun</button>
+                        <button type="button" data-week-start="1" aria-pressed="false">Mon</button>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="notes-input">Notes</label>
-                    <textarea id="notes-input" rows="4"></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button id="modal-close-btn">Cancel</button>
-                <button id="modal-save-btn">Save</button>
-            </div>
+                <button type="button" class="menu-item" data-open="medals-panel"><svg class="icon"><use href="#i-medal" /></svg><span>View Medals</span><svg class="icon chev"><use href="#i-chev" /></svg></button>
+                <button type="button" class="menu-item" data-open="theme-panel"><svg class="icon"><use href="#i-theme" /></svg><span>Custom Theme</span><svg class="icon chev"><use href="#i-chev" /></svg></button>
+                <button type="button" class="menu-item" id="share-app-btn"><svg class="icon"><use href="#i-share" /></svg><span>Share App</span></button>
+                <button type="button" class="menu-item" data-open="data-panel"><svg class="icon"><use href="#i-data" /></svg><span>Import / Export Data</span><svg class="icon chev"><use href="#i-chev" /></svg></button>
+            </nav>
+            <p class="credit">Created by Omar Rivas<span class="version">v5.2.0</span></p>
         </div>
-    </div>
-    
-    <div id="alert-modal" class="modal-overlay">
-        <div class="modal-content">
-            <p id="alert-message">Message Here</p>
-            <div class="modal-footer" style="justify-content: center;">
-                <button id="alert-ok-btn">OK</button>
-            </div>
-        </div>
-    </div>
+    </dialog>
 
-    <div id="ios-install-modal" class="modal-overlay">
-        <div class="modal-content">
-            <p class="ios-install-message">To install this app, tap the Share icon, then scroll down and select 'Add to Home Screen'.</p>
-            <div class="modal-footer" style="justify-content: center;">
-                <button id="ios-install-done-btn">Done</button>
+    <!-- Goals -->
+    <dialog id="goals-panel" class="sheet" aria-labelledby="goals-title">
+        <form class="sheet-inner" id="goals-form" novalidate>
+            <div class="sheet-head">
+                <button type="button" class="icon-btn" data-close aria-label="Back"><svg class="icon"><use href="#i-back" /></svg></button>
+                <h2 id="goals-title">Goals &amp; Service Year</h2>
+                <span class="head-spacer"></span>
             </div>
-        </div>
-    </div>
-
-    <div id="planning-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h2 id="planning-modal-title">Plan Time for a Date</h2>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>Planned Time</label>
-                    <div class="time-input-group">
-                        <input type="text" inputmode="numeric" id="planning-hours-input" placeholder="Hours"><span>h</span>
-                        <input type="text" inputmode="numeric" id="planning-minutes-input" placeholder="Mins"><span>min</span>
+            <div class="sheet-body">
+                <section class="group">
+                    <h3 class="group-title"><span class="em" aria-hidden="true">🎯</span>Monthly goal · <span id="goal-month-label"></span></h3>
+                    <div class="field-row">
+                        <label for="month-goal-input">Hours</label>
+                        <input type="text" inputmode="decimal" id="month-goal-input" class="num-input" autocomplete="off">
                     </div>
-                </div>
+                    <div class="field-row">
+                        <label for="month-goal-scope">Apply to</label>
+                        <select id="month-goal-scope">
+                            <option value="forward">This month and later</option>
+                            <option value="only">This month only</option>
+                        </select>
+                    </div>
+                </section>
+                <section class="group">
+                    <h3 class="group-title"><span class="em" aria-hidden="true">🎯</span>Service year goal · <span id="goal-year-label"></span></h3>
+                    <p class="group-note" id="goal-year-range"></p>
+                    <div class="field-row">
+                        <label for="year-goal-input">Hours</label>
+                        <input type="text" inputmode="decimal" id="year-goal-input" class="num-input" autocomplete="off">
+                    </div>
+                    <div class="field-row">
+                        <label for="year-goal-scope">Apply to</label>
+                        <select id="year-goal-scope">
+                            <option value="forward">This service year and later</option>
+                            <option value="only">This service year only</option>
+                        </select>
+                    </div>
+                </section>
+                <section class="group">
+                    <h3 class="group-title">Service year</h3>
+                    <div class="field-row">
+                        <label for="sy-start-select">Starts in</label>
+                        <select id="sy-start-select"></select>
+                    </div>
+                    <p class="group-note" id="sy-start-preview"></p>
+                </section>
+                <p class="form-error" id="goals-error" role="alert"></p>
+                <p class="group-note">Goals are saved for the month and service year shown, so changing a new goal never rewrites past months or years.</p>
             </div>
-            <div class="modal-footer">
-                <button id="planning-modal-close-btn">Cancel</button>
-                <button id="planning-modal-delete-btn">Clear Plan</button>
-                <button id="planning-modal-save-btn">Save Plan</button>
+            <div class="sheet-foot">
+                <button type="button" class="btn" data-close>Cancel</button>
+                <button type="submit" class="btn primary">Save Goals</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Service History -->
+    <dialog id="history-panel" class="sheet" aria-labelledby="history-title">
+        <div class="sheet-inner">
+            <div class="sheet-head">
+                <button type="button" class="icon-btn" data-close aria-label="Back to calendar"><svg class="icon"><use href="#i-back" /></svg></button>
+                <h2 id="history-title">Service History</h2>
+                <span class="head-spacer"></span>
+            </div>
+            <div class="sheet-body" id="history-list"></div>
+        </div>
+    </dialog>
+
+    <dialog id="year-detail-panel" class="sheet" aria-labelledby="year-detail-title">
+        <div class="sheet-inner">
+            <div class="sheet-head">
+                <button type="button" class="icon-btn" data-close aria-label="Back"><svg class="icon"><use href="#i-back" /></svg></button>
+                <h2 id="year-detail-title">Service Year</h2>
+                <span class="head-spacer"></span>
+            </div>
+            <div class="sheet-body" id="year-detail-body"></div>
+        </div>
+    </dialog>
+
+    <!-- Medals -->
+    <dialog id="medals-panel" class="sheet" aria-labelledby="medals-title">
+        <div class="sheet-inner">
+            <div class="sheet-head">
+                <button type="button" class="icon-btn" data-close aria-label="Back"><svg class="icon"><use href="#i-back" /></svg></button>
+                <h2 id="medals-title">Medal Room</h2>
+                <span class="head-spacer"></span>
+            </div>
+            <div class="sheet-body" id="medals-body"></div>
+        </div>
+    </dialog>
+
+    <!-- Theme -->
+    <dialog id="theme-panel" class="sheet" aria-labelledby="theme-title">
+        <div class="sheet-inner">
+            <div class="sheet-head">
+                <button type="button" class="icon-btn" data-close aria-label="Back"><svg class="icon"><use href="#i-back" /></svg></button>
+                <h2 id="theme-title">Custom Theme</h2>
+                <span class="head-spacer"></span>
+            </div>
+            <div class="sheet-body">
+                <section class="group">
+                    <h3 class="group-title">Presets</h3>
+                    <div class="preset-grid" id="preset-grid"></div>
+                </section>
+                <section class="group">
+                    <h3 class="group-title">Custom colours</h3>
+                    <div class="field-row"><label for="color-background">Background</label><input type="color" id="color-background" data-color="background" class="color-input"></div>
+                    <div class="field-row"><label for="color-card">Cards</label><input type="color" id="color-card" data-color="card" class="color-input"></div>
+                    <div class="field-row"><label for="color-accent">Accent</label><input type="color" id="color-accent" data-color="accent" class="color-input"></div>
+                    <div class="field-row"><label for="color-text">Text</label><input type="color" id="color-text" data-color="text" class="color-input"></div>
+                    <div class="field-row">
+                        <label for="color-border">Outlines</label>
+                        <span class="picker-with-reset">
+                            <button type="button" class="text-btn" id="border-auto-btn" aria-describedby="border-mode">Auto</button>
+                            <input type="color" id="color-border" data-color="border" class="color-input">
+                        </span>
+                    </div>
+                    <p class="group-note" id="border-mode"></p>
+                    <p class="group-note" id="contrast-note"></p>
+                </section>
+                <section class="group">
+                    <h3 class="group-title">Status colours</h3>
+                    <p class="group-note">The bar across the top of a day compares its logged time with its plan. These colours stay the same when you switch presets.</p>
+                    <div class="status-preview" aria-hidden="true">
+                        <span class="sp-day st-planned"><b>1</b><i>🤔2h</i></span>
+                        <span class="sp-day st-missed"><b>2</b><i>🤔2h</i></span>
+                        <span class="sp-day st-under"><b>3</b><i>⏱️1h</i></span>
+                        <span class="sp-day st-complete"><b>4</b><i>⏱️2h</i></span>
+                    </div>
+                    <div class="field-row"><label for="status-planned">Planned</label><input type="color" id="status-planned" data-status="planned" class="color-input"></div>
+                    <div class="field-row"><label for="status-missed">Missed plan</label><input type="color" id="status-missed" data-status="missed" class="color-input"></div>
+                    <div class="field-row"><label for="status-under">Below plan</label><input type="color" id="status-under" data-status="under" class="color-input"></div>
+                    <div class="field-row"><label for="status-complete">Plan completed</label><input type="color" id="status-complete" data-status="complete" class="color-input"></div>
+                    <button type="button" class="btn small" id="status-reset-btn">Reset status colours</button>
+                </section>
             </div>
         </div>
-    </div>
+    </dialog>
 
-    <script src="app.js"></script>
+    <!-- Import / Export -->
+    <dialog id="data-panel" class="sheet" aria-labelledby="data-title">
+        <div class="sheet-inner">
+            <div class="sheet-head">
+                <button type="button" class="icon-btn" data-close aria-label="Back"><svg class="icon"><use href="#i-back" /></svg></button>
+                <h2 id="data-title">Import / Export Data</h2>
+                <span class="head-spacer"></span>
+            </div>
+            <div class="sheet-body">
+                <p class="group-note">Your data is stored only on this device. Export a backup regularly and keep it somewhere safe. Backups include every entry, plan, note, goal, medal, theme and preference.</p>
+                <div class="stack">
+                    <button type="button" class="btn primary block" id="export-btn">Export Backup</button>
+                    <button type="button" class="btn block" id="import-btn">Import Backup…</button>
+                    <input type="file" id="import-file-input" accept=".json,application/json" hidden>
+                </div>
+                <p class="group-note" id="data-summary"></p>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Entry -->
+    <dialog id="entry-modal" class="modal" aria-labelledby="entry-title">
+        <form id="entry-form" class="modal-inner" novalidate>
+            <h2 id="entry-title">Entry</h2>
+            <p class="modal-sub" id="entry-plan-note" hidden></p>
+            <div class="field-grid">
+                <div class="field">
+                    <label for="entry-hours"><span class="em" aria-hidden="true">⏱️</span>Hours</label>
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="entry-hours" class="num-input" placeholder="0" autocomplete="off" maxlength="2">
+                </div>
+                <div class="field">
+                    <label for="entry-minutes"><span class="em" aria-hidden="true">⏱️</span>Minutes</label>
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="entry-minutes" class="num-input" placeholder="0" autocomplete="off" maxlength="2">
+                </div>
+                <div class="field">
+                    <label for="entry-studies"><span class="em" aria-hidden="true">👨🏽‍🏫</span>Studies</label>
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="entry-studies" class="num-input" placeholder="0" autocomplete="off" maxlength="3">
+                </div>
+            </div>
+            <div class="field">
+                <label for="entry-notes"><span class="em" aria-hidden="true">📝</span>Notes</label>
+                <textarea id="entry-notes" rows="3" maxlength="5000"></textarea>
+            </div>
+            <p class="form-error" id="entry-error" role="alert"></p>
+            <div class="modal-foot">
+                <button type="button" class="btn" data-close>Cancel</button>
+                <button type="submit" class="btn primary">Save</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Planning -->
+    <dialog id="plan-modal" class="modal" aria-labelledby="plan-title">
+        <form id="plan-form" class="modal-inner" novalidate>
+            <h2 id="plan-title">Plan</h2>
+            <p class="modal-sub" id="plan-sub"></p>
+            <div class="field-grid two">
+                <div class="field">
+                    <label for="plan-hours"><span class="em" aria-hidden="true">🤔</span>Hours</label>
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="plan-hours" class="num-input" placeholder="0" autocomplete="off" maxlength="2">
+                </div>
+                <div class="field">
+                    <label for="plan-minutes"><span class="em" aria-hidden="true">🤔</span>Minutes</label>
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="plan-minutes" class="num-input" placeholder="0" autocomplete="off" maxlength="2">
+                </div>
+            </div>
+            <p class="form-error" id="plan-error" role="alert"></p>
+            <div class="modal-foot">
+                <button type="button" class="btn" data-close>Cancel</button>
+                <button type="button" class="btn danger" id="plan-clear-btn">Clear</button>
+                <button type="submit" class="btn primary" id="plan-save-btn">Save Plan</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Alert / Confirm -->
+    <dialog id="alert-modal" class="modal compact" aria-labelledby="alert-title" aria-describedby="alert-message">
+        <div class="modal-inner">
+            <h2 id="alert-title" class="visually-hidden">Notice</h2>
+            <p id="alert-message" class="alert-message"></p>
+            <div class="modal-foot">
+                <button type="button" class="btn" id="alert-cancel-btn">Cancel</button>
+                <button type="button" class="btn primary" id="alert-ok-btn">OK</button>
+            </div>
+        </div>
+    </dialog>
+
+    <script src="js/dates.js"></script>
+    <script src="js/stats.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/achievements.js"></script>
+    <script src="js/layers.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
