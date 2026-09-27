@@ -3,8 +3,12 @@
  * Sections: state · rendering (header, calendar, summaries) · entry modal ·
  * planning · goals · Service History · medals · theme · import/export ·
  * menu & sharing · PWA · startup.
+ *
+ * Data flow: every change updates the in-memory state, is saved to the local
+ * database (js/localdb.js) and, if the user connected a cloud account, is
+ * picked up by the sync engine in the background (js/sync-ui.js).
  */
-(function () {
+(async function () {
     'use strict';
     const { dates: D, stats: S, storage: Store, achievements: A, theme: Theme, layers: L } = window.STT;
 
@@ -19,7 +23,13 @@
     const SHARE_URL = 'https://muychakisimo.github.io/ServiceHourTracker/';
 
     /* ================= State ================= */
+    // First paint uses the localStorage copy (instant); the local database
+    // (IndexedDB) is opened right after and becomes the source of truth.
     const loaded = Store.load();
+    let local = null;
+    let editedBeforeReady = false; // an edit made in the first moments, before the database opened
+    // Test hook (read-only): lets automated checks inspect state without touching storage.
+    window.STT.debug = { get state() { return { db, settings, medals, view: { ...view }, today }; }, get local() { return local; } };
     let db = loaded.database;
     let settings = loaded.settings;
     let medals = loaded.medals;
@@ -30,12 +40,34 @@
     const planning = { on: false, scope: 'per-day' };
     let editingKey = null;
 
+    const saveFailed = () => showAlert('Your changes could not be saved on this device (storage may be full or disabled). Export a backup to keep your data safe.');
+
+    /** Saves the current state locally. Only changed records are written and queued for sync. */
     function persist(which) {
+        if (local) {
+            local.save({ database: db, settings, medals }).catch(e => { console.error(e); saveFailed(); });
+            return true;
+        }
+        editedBeforeReady = true;
         const ok = (!which.includes('db') || Store.save(Store.KEYS.db, db))
             & (!which.includes('settings') || Store.save(Store.KEYS.settings, settings))
             & (!which.includes('medals') || Store.save(Store.KEYS.medals, medals));
-        if (!ok) showAlert('Your changes could not be saved on this device (storage may be full or disabled). Export a backup to keep your data safe.');
+        if (!ok) saveFailed();
         return !!ok;
+    }
+
+    /** Replaces the whole state (after sync downloads, imports or a wipe) and redraws. */
+    function applyState(next) {
+        db = next.database;
+        settings = next.settings;
+        medals = next.medals;
+        Theme.apply(settings.theme);
+        renderWeekdays();
+        renderWeekStart();
+        renderAll();
+        if (L.isOpen($('history-panel'))) renderHistory();
+        if (L.isOpen($('medals-panel'))) renderMedals();
+        if (L.isOpen($('data-panel'))) renderDataSummary();
     }
 
     const currentServiceYear = () => D.serviceYearFor(view.year, view.month, settings.serviceYearStartMonth);
@@ -81,6 +113,26 @@
     }
     const showAlert = (m) => dialogMessage(m);
     const showConfirm = (m, o) => dialogMessage(m, { confirm: true, ...o });
+
+    /** A dialog with several choices. Resolves with the chosen value (or cancelValue). */
+    function showChoice({ title, message, options, cancelValue = null }) {
+        return new Promise(resolve => {
+            const dlg = $('choice-modal');
+            let result = cancelValue;
+            $('choice-title').textContent = title || '';
+            $('choice-message').textContent = message || '';
+            const wrap = $('choice-buttons');
+            wrap.textContent = '';
+            for (const o of options) {
+                const b = el('button', 'btn block' + (o.style ? ' ' + o.style : ''), o.label);
+                b.type = 'button';
+                b.addEventListener('click', () => { result = o.value; L.close(dlg); });
+                wrap.appendChild(b);
+            }
+            L.open(dlg, { onClose: () => resolve(result) });
+            setTimeout(() => { const first = wrap.querySelector('button'); if (first) first.focus(); }, 0);
+        });
+    }
 
     /* ================= Header ================= */
     function renderHeader() {
@@ -760,10 +812,18 @@
         $('data-summary').textContent = withService.length
             ? `On this device: ${withService.length} day${withService.length === 1 ? '' : 's'} of records since ${D.formatShortDate(withService[0])}.`
             : 'No service records on this device yet.';
+        if (window.STT.syncUI && window.STT.syncUI.isConnected()) {
+            $('data-summary').textContent += ' Cloud sync is on; a backup file is still a good extra copy. Importing while syncing merges the backup into your data.';
+        }
     }
 
-    function exportData() {
+    async function exportData() {
         const backup = Store.buildBackup(db, settings, medals);
+        // Versions replaced during sync merges are kept on the device; include them.
+        // Sign-in tokens and sync internals are never exported.
+        if (local) {
+            try { const c = await local.kvGet('conflicts'); if (c && c.length) backup.syncConflicts = c; } catch (e) { /* optional */ }
+        }
         const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -784,24 +844,50 @@
         const keys = Object.keys(parsed.database).sort();
         const days = keys.filter(k => S.hasActual(parsed.database[k])).length;
         const years = S.discoverServiceYears(parsed.database, parsed.settings.serviceYearStartMonth, today);
+        const syncing = !!(window.STT.syncUI && window.STT.syncUI.isConnected());
         const lines = [
             parsed.exportedAt ? `Backup from ${D.formatShortDate(D.dateToKey(new Date(parsed.exportedAt)))}.` : 'Backup file found.',
             `${days} day${days === 1 ? '' : 's'} of records` + (years.hasData ? ` across ${years.years.length} service year${years.years.length === 1 ? '' : 's'}.` : '.'),
             '',
-            'Importing replaces all data on this device with this backup. Export a backup first if you might need the current data.'
+            syncing
+                ? 'Cloud sync is on, so the backup will be merged, not replace your data: days, goals and medals in the backup become the newest version and sync to your other devices. Nothing else is deleted.'
+                : 'Importing replaces all data on this device with this backup. Export a backup first if you might need the current data.'
         ];
-        const ok = await showConfirm(lines.join('\n'), { okLabel: 'Replace Data', danger: true });
+        const ok = await showConfirm(lines.join('\n'), syncing ? { okLabel: 'Merge Backup' } : { okLabel: 'Replace Data', danger: true });
         if (!ok) return;
-        db = parsed.database;
-        settings = parsed.settings;
-        medals = parsed.medals;
-        persist(['db', 'settings', 'medals']);
-        Theme.apply(settings.theme);
-        renderWeekdays();
-        renderAll();
-        renderDataSummary();
-        renderWeekStart();
-        showAlert('Data imported successfully.' + (parsed.skipped ? ` ${parsed.skipped} invalid record${parsed.skipped === 1 ? ' was' : 's were'} skipped.` : ''));
+        const backup = { database: parsed.database, settings: parsed.settings, medals: parsed.medals };
+        if (syncing) {
+            applyState(mergeBackup({ database: db, settings, medals }, backup));
+            persist(['db', 'settings', 'medals']);
+        } else if (local) {
+            // No tombstones are created, so a later cloud connection can never delete data because of this import.
+            try { applyState(await local.replaceAll(backup)); } catch (e) { console.error(e); saveFailed(); return; }
+        } else {
+            applyState(backup);
+            persist(['db', 'settings', 'medals']);
+        }
+        showAlert((syncing ? 'Backup merged. It will sync to your other devices.' : 'Data imported successfully.') +
+            (parsed.skipped ? ` ${parsed.skipped} invalid record${parsed.skipped === 1 ? ' was' : 's were'} skipped.` : ''));
+    }
+
+    /** Backup merged into current data: backup values win for the same day/goal; nothing is removed. */
+    function mergeBackup(cur, bk) {
+        const start = bk.settings.serviceYearStartMonth;
+        const sameStart = start === cur.settings.serviceYearStartMonth;
+        const curYearGoals = sameStart ? cur.settings.yearGoals : Store.remapYearGoals(cur.settings.yearGoals, start);
+        const curYears = sameStart ? cur.medals.completedYears : Store.remapYearIds(cur.medals.completedYears, cur.settings.serviceYearStartMonth, start);
+        return {
+            database: { ...cur.database, ...bk.database },
+            settings: Store.sanitizeSettings({
+                ...bk.settings,
+                monthGoals: { ...cur.settings.monthGoals, ...bk.settings.monthGoals },
+                yearGoals: { ...curYearGoals, ...bk.settings.yearGoals }
+            }),
+            medals: Store.sanitizeMedals({
+                completedMonths: [...cur.medals.completedMonths, ...bk.medals.completedMonths],
+                completedYears: [...curYears, ...bk.medals.completedYears]
+            })
+        };
     }
 
     /* ================= Menu, week start, sharing ================= */
@@ -839,7 +925,8 @@
         'history-panel': openHistory,
         'medals-panel': () => { renderMedals(); L.open($('medals-panel')); },
         'theme-panel': () => { renderThemePanel(); L.open($('theme-panel')); },
-        'data-panel': () => { renderDataSummary(); L.open($('data-panel')); }
+        'data-panel': () => { renderDataSummary(); L.open($('data-panel')); },
+        'sync-panel': () => window.STT.syncUI.open()
     };
 
     /* ================= PWA ================= */
@@ -849,6 +936,7 @@
 
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./service-worker.js').then(reg => {
+                if (!reg) return;
                 const offerUpdate = (worker) => {
                     showBanner('A new version is available.', 'Update', () => {
                         reloading = true;
@@ -969,15 +1057,37 @@
 
     /* ================= Start ================= */
     Theme.apply(settings.theme);
-    bindEvents();
     renderWeekdays();
     renderWeekStart();
     renderAll();
-    setupPwa();
-    if (loaded.corrupt) {
-        showAlert('Some saved data on this device could not be read. It has been kept untouched in storage; please import your latest backup if anything is missing.');
+    bindEvents();
+
+    let opened = null;
+    try {
+        opened = await window.STT.localdb.openBest(loaded);
+        local = opened.store;
+        // Keep (and save) anything the user changed while the database was opening.
+        if (editedBeforeReady) await local.save({ database: db, settings, medals });
+        else applyState(local.state);
+        local.on('remote', applyState);
+        if (opened.fallback) console.warn('IndexedDB unavailable: using localStorage only (cloud sync disabled).');
+        if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+    } catch (e) {
+        console.error('Local database could not be opened; using localStorage.', e);
     }
 
-    // Test hook (read-only): lets automated checks inspect state without touching storage.
-    window.STT.debug = { get state() { return { db, settings, medals, view: { ...view }, today }; } };
+    setupPwa();
+    document.documentElement.dataset.ready = '1';
+    if (loaded.corrupt) {
+        showAlert('Some saved data on this device could not be read. It has been kept untouched in storage; please import your latest backup if anything is missing.');
+    } else if (opened && opened.recovered) {
+        showToast('Restored your data from this device’s backup copy');
+    }
+
+    // Cloud sync (optional): Account & Sync screen, background sync, sign-in returns.
+    window.STT.syncUI.init({
+        local,
+        app: { showAlert, showConfirm, showChoice, showToast, openPanel: dlg => L.open(dlg), getState: () => ({ database: db, settings, medals }) }
+    });
+
 })();

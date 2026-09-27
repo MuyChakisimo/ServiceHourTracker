@@ -5,7 +5,7 @@
  * and, when tapped, tells the worker to take over and reloads. Old caches are
  * removed on activation, so users are never stuck on an outdated version.
  */
-const CACHE_VERSION = 'v5.2.0';
+const CACHE_VERSION = 'v6.0.0';
 const CACHE_NAME = `service-time-tracker-${CACHE_VERSION}`;
 const APP_SHELL = [
     './',
@@ -19,6 +19,12 @@ const APP_SHELL = [
     './js/storage.js',
     './js/achievements.js',
     './js/layers.js',
+    './js/sync-core.js',
+    './js/localdb.js',
+    './js/sync-engine.js',
+    './js/cloud-config.js',
+    './js/providers.js',
+    './js/sync-ui.js',
     './js/app.js',
     './images/icon-192.png',
     './images/icon-512.png',
@@ -56,7 +62,10 @@ self.addEventListener('fetch', event => {
     const req = event.request;
     if (req.method !== 'GET') return;
     const url = new URL(req.url);
+    // Cloud provider APIs and sign-in pages always go straight to the network.
     if (url.origin !== self.location.origin) return;
+    // The sign-in callback must always be loaded fresh with its URL intact.
+    if (url.pathname.endsWith('/oauth-callback.html')) return;
 
     if (req.mode === 'navigate') {
         event.respondWith(

@@ -6,6 +6,7 @@
     <title>Service Time Tracker</title>
     <meta name="description" content="Track monthly and service-year service time, studies, notes and plans.">
     <meta name="theme-color" content="#0d0019">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https:; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
     <link rel="icon" href="favicon.ico" sizes="any">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
@@ -31,6 +32,7 @@
         <symbol id="i-medal" viewBox="0 0 24 24"><path d="M8 3h8l-2 6h-4zM7.5 3L10 9M16.5 3L14 9" /><circle cx="12" cy="15" r="5.5" /></symbol>
         <symbol id="i-theme" viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 1 0 0 17c1.2 0 1.8-.9 1.4-1.9-.5-1.2.2-2.3 1.5-2.3h1.8a3.8 3.8 0 0 0 3.8-3.8C20.5 7.2 16.7 3.5 12 3.5z" /><circle cx="7.8" cy="11" r="1" /><circle cx="10.5" cy="7.6" r="1" /><circle cx="14.8" cy="7.9" r="1" /></symbol>
         <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3.5v11M7.5 8L12 3.5 16.5 8M5 12.5v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" /></symbol>
+        <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18.5h10.5a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.6 9.1 4.7 4.7 0 0 0 7 18.5z" /><path d="M9.5 13.5l2 2 3.5-3.8" /></symbol>
         <symbol id="i-data" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.5" ry="2.8" /><path d="M4.5 6v12c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8V6M4.5 12c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8" /></symbol>
     </svg>
 
@@ -38,6 +40,7 @@
         <header class="topbar">
             <button class="icon-btn" id="menu-btn" type="button" aria-label="Open menu" aria-haspopup="dialog">
                 <svg class="icon"><use href="#i-menu" /></svg>
+                <span class="sync-dot" id="sync-dot" hidden></span>
             </button>
             <div class="month-nav">
                 <button class="icon-btn" id="prev-month-btn" type="button" aria-label="Previous month">
@@ -141,9 +144,10 @@
                 <button type="button" class="menu-item" data-open="medals-panel"><svg class="icon"><use href="#i-medal" /></svg><span>View Medals</span><svg class="icon chev"><use href="#i-chev" /></svg></button>
                 <button type="button" class="menu-item" data-open="theme-panel"><svg class="icon"><use href="#i-theme" /></svg><span>Custom Theme</span><svg class="icon chev"><use href="#i-chev" /></svg></button>
                 <button type="button" class="menu-item" id="share-app-btn"><svg class="icon"><use href="#i-share" /></svg><span>Share App</span></button>
+                <button type="button" class="menu-item" data-open="sync-panel"><svg class="icon"><use href="#i-cloud" /></svg><span>Account &amp; Sync</span><span class="menu-status" id="menu-sync-status"></span><svg class="icon chev"><use href="#i-chev" /></svg></button>
                 <button type="button" class="menu-item" data-open="data-panel"><svg class="icon"><use href="#i-data" /></svg><span>Import / Export Data</span><svg class="icon chev"><use href="#i-chev" /></svg></button>
             </nav>
-            <p class="credit">Created by Omar Rivas<span class="version">v5.2.0</span></p>
+            <p class="credit">Created by Omar Rivas<span class="version">v6.0.0</span></p>
         </div>
     </dialog>
 
@@ -295,7 +299,7 @@
                 <span class="head-spacer"></span>
             </div>
             <div class="sheet-body">
-                <p class="group-note">Your data is stored only on this device. Export a backup regularly and keep it somewhere safe. Backups include every entry, plan, note, goal, medal, theme and preference.</p>
+                <p class="group-note">Unless you turn on cloud sync (Menu → Account &amp; Sync), your data is stored only on this device. Export a backup regularly and keep it somewhere safe. Backups include every entry, plan, note, goal, medal, theme and preference.</p>
                 <div class="stack">
                     <button type="button" class="btn primary block" id="export-btn">Export Backup</button>
                     <button type="button" class="btn block" id="import-btn">Import Backup…</button>
@@ -303,6 +307,18 @@
                 </div>
                 <p class="group-note" id="data-summary"></p>
             </div>
+        </div>
+    </dialog>
+
+    <!-- Account & Sync -->
+    <dialog id="sync-panel" class="sheet" aria-labelledby="sync-title">
+        <div class="sheet-inner">
+            <div class="sheet-head">
+                <button type="button" class="icon-btn" data-close aria-label="Back"><svg class="icon"><use href="#i-back" /></svg></button>
+                <h2 id="sync-title">Account &amp; Sync</h2>
+                <span class="head-spacer"></span>
+            </div>
+            <div class="sheet-body" id="sync-body" aria-live="polite"></div>
         </div>
     </dialog>
 
@@ -373,11 +389,26 @@
         </div>
     </dialog>
 
+    <!-- Multiple choice -->
+    <dialog id="choice-modal" class="modal compact" aria-labelledby="choice-title" aria-describedby="choice-message">
+        <div class="modal-inner">
+            <h2 id="choice-title"></h2>
+            <p id="choice-message" class="alert-message"></p>
+            <div class="choice-list" id="choice-buttons"></div>
+        </div>
+    </dialog>
+
     <script src="js/dates.js"></script>
     <script src="js/stats.js"></script>
     <script src="js/storage.js"></script>
     <script src="js/achievements.js"></script>
     <script src="js/layers.js"></script>
+    <script src="js/sync-core.js"></script>
+    <script src="js/localdb.js"></script>
+    <script src="js/sync-engine.js"></script>
+    <script src="js/cloud-config.js"></script>
+    <script src="js/providers.js"></script>
+    <script src="js/sync-ui.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

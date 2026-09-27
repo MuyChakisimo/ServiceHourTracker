@@ -51,8 +51,10 @@
         if (auto) auto.focus();
     }
 
+    const selfClosed = new WeakSet(); // dialogs whose next 'close' event we caused ourselves
+
     function finishClose(dlg) {
-        if (dlg.open) dlg.close();
+        if (dlg.open) { selfClosed.add(dlg); dlg.close(); }
         const handler = onCloseHandlers.get(dlg);
         onCloseHandlers.delete(dlg);
         const back = returnFocus.get(dlg);
@@ -94,7 +96,12 @@
     function register(dlg) {
         dlg.addEventListener('cancel', (e) => { e.preventDefault(); close(dlg); });
         // Closed some other way (e.g. by the browser): keep the stack in sync.
-        dlg.addEventListener('close', () => { if (isOpen(dlg)) close(dlg); });
+        // The 'close' event arrives asynchronously; ignore the one from our own close()
+        // so it cannot close the same dialog if it was reopened in the meantime.
+        dlg.addEventListener('close', () => {
+            if (selfClosed.has(dlg)) { selfClosed.delete(dlg); return; }
+            if (isOpen(dlg)) close(dlg);
+        });
         // Tapping the backdrop closes modals (not full-screen sheets).
         dlg.addEventListener('click', (e) => {
             if (e.target === dlg && (dlg.classList.contains('modal') || dlg.classList.contains('drawer'))) close(dlg);

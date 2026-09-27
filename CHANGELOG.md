@@ -1,5 +1,24 @@
 # Changelog
 
+## 6.0.0 — Optional cloud sync
+- **Account & Sync** (menu):
+  - Connect your own Google Drive, OneDrive or Dropbox. It's optional and there's no login on start.
+  - Choose Automatic (default) or Manual sync, or use Sync Now.
+  - Status, last sync time, Disconnect (keep or remove local data) and Delete Cloud Backup.
+- **Local database moved to IndexedDB:**
+  - Migrated automatically and verified before switching over.
+  - The localStorage keys are kept as a mirror and recovery copy.
+- **Sync model:**
+  - One record per day, goal, medal and preference, merged by last write wins.
+  - Deletions are tombstones, so they are never resurrected.
+  - One cloud file per month.
+  - Conditional writes; damaged cloud files are set aside instead of being trusted.
+- Importing a backup while syncing **merges** it instead of replacing data.
+- Sign-in tokens are encrypted on the device and never exported.
+- Content-Security-Policy added.
+- Fixed a dialog bug: a confirmation shown right after another one could close itself.
+- See `CLOUD_SYNC_SETUP.md` for provider setup.
+
 ## 5.2.0
 - Custom Theme has an **Outlines** colour. Tap **Auto** to go back to outlines matched to your card and text colours.
 - New **Status colours** section with pickers for Planned, Missed plan, Below plan and Plan completed, a live preview and a reset button.

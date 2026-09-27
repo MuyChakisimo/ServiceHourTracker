@@ -1,0 +1,11 @@
+node_modules/
+*.zip
+.DS_Store
+# Native app projects are generated locally with Capacitor (see CLOUD_SYNC_SETUP.md)
+www/
+ios/App/Pods/
+android/.gradle/
+android/app/build/
+# Local-only overrides; never commit secrets
+*.local.js
+.env
