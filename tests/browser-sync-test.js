@@ -17,7 +17,13 @@ async function wire(ctx, fake) {
     const loc = fake.consent(route.request().url());
     await route.fulfill({ status: 302, headers: { Location: loc } });
   };
-  await ctx.route('https://accounts.google.com/**', authorize);
+  await ctx.exposeFunction('testGoogleToken', () => new Promise(resolve => {
+    fake.googleIdentity().accounts.oauth2.initTokenClient({ scope: 'https://www.googleapis.com/auth/drive.appdata', include_granted_scopes: false, callback: resolve }).requestAccessToken();
+  }));
+  await ctx.route('https://accounts.google.com/gsi/client', r => r.fulfill({ contentType: 'application/javascript', body: `window.google = { accounts: { oauth2: { initTokenClient(config) { return { requestAccessToken() {
+    if (!navigator.userActivation.isActive) throw new Error('Google sign-in lost the user gesture');
+    window.testGoogleToken().then(config.callback);
+  } }; } } } };` }));
   await ctx.route('https://www.dropbox.com/oauth2/authorize**', authorize);
   await ctx.route(/https:\/\/(login\.microsoftonline\.com|graph\.microsoft\.com|[a-z0-9.]*googleapis\.com|[a-z.]*dropboxapi\.com|fake-download\.onedrive\.test)\/.*/, async route => {
     const req = route.request();
@@ -50,7 +56,7 @@ const status = page => page.evaluate(() => STT.sync.status);
 const waitIdle = page => page.waitForFunction(() => STT.sync && STT.sync.status.phase === 'idle' && STT.sync.status.lastSyncAt, null, { timeout: 15000 });
 
 (async () => {
-  const browser = await chromium.launch();
+  const browser = await chromium.launch(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {});
 
   console.log('Migration of existing 5.x data to IndexedDB');
   const fake0 = createFakeProviders();

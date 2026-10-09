@@ -26,15 +26,17 @@ function createFakeProviders() {
     };
 
     /* ---- consent screens: return the redirect the provider would send ---- */
+    function googleIdentity() {
+        return { accounts: { oauth2: { initTokenClient(config) {
+            if (config.scope !== 'https://www.googleapis.com/auth/drive.appdata' || config.include_granted_scopes !== false) throw new Error('bad Google token client config');
+            return { requestAccessToken() { config.callback({ access_token: issue('google'), token_type: 'Bearer', expires_in: 3599, scope: config.scope }); } };
+        } } } };
+    }
     function consent(authUrl) {
         const u = new URL(authUrl);
         const p = u.searchParams;
         const redirect = p.get('redirect_uri');
-        if (u.host === 'accounts.google.com') {
-            if (p.get('response_type') !== 'token' || p.get('scope') !== 'https://www.googleapis.com/auth/drive.appdata') throw new Error('bad google authorize request');
-            const t = issue('google');
-            return `${redirect}#access_token=${t}&token_type=Bearer&expires_in=3599&scope=${encodeURIComponent(p.get('scope'))}&state=${p.get('state')}`;
-        }
+        if (u.host === 'accounts.google.com') throw new Error('Google must use Identity Services, not a token redirect');
         const code = `code-${++seq}`;
         if (u.host === 'login.microsoftonline.com') {
             if (p.get('response_type') !== 'code' || p.get('code_challenge_method') !== 'S256' || !/Files\.ReadWrite\.AppFolder/.test(p.get('scope')) || !/offline_access/.test(p.get('scope'))) throw new Error('bad microsoft authorize request');
@@ -224,7 +226,7 @@ function createFakeProviders() {
     }
 
     return {
-        fetch: fetchImpl, consent, log,
+        fetch: fetchImpl, consent, googleIdentity, log,
         stores: { google: drive, onedrive: od, dropbox: dbx },
         expireAccessTokens: () => { for (const t of tokens.values()) t.exp = 0; },
         revokeRefreshTokens: () => { for (const r of refreshTokens.values()) r.revoked = true; },

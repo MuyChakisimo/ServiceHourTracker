@@ -7,8 +7,8 @@
  *   Dropbox       Apps/<app name> (App folder)  scoped app, files.content.*
  *   iCloud        native iOS app only (plugin), not available in browsers
  *
- * Sign-in uses full-page redirects (not pop-ups, which installed PWAs and iOS
- * often block). No client secrets are used anywhere; client IDs are public.
+ * Google uses Google Identity Services; other web providers use full-page
+ * redirects. No client secrets are used anywhere; client IDs are public.
  * Tokens are encrypted with a non-extractable WebCrypto key before being
  * stored in IndexedDB, and are never written to localStorage or backups.
  */
@@ -135,6 +135,7 @@
         new URLSearchParams((result.query || '').replace(/^\?/, '')).forEach((v, k) => { if (!params.has(k)) params.set(k, v); });
         if (!pending || Date.now() - pending.at > 15 * 60e3) return { error: 'The sign-in took too long or was started elsewhere. Please try again.' };
         if (params.get('state') !== pending.state) return { error: 'The sign-in response did not match this request, so it was ignored for your security.' };
+        if (pending.provider === 'google') return { error: 'Google sign-in has been updated. Tap Connect or Reconnect to try again.' };
         if (params.get('error')) {
             const denied = /access_denied|consent_required|interaction_required|user_cancel/.test(params.get('error'));
             return { provider: pending.provider, reconnect: pending.reconnect, error: denied ? 'Access was not granted.' : `Sign-in failed (${params.get('error')}).` };
@@ -184,18 +185,36 @@
     const GOOGLE = {
         id: 'google', name: 'Google Drive',
         platforms: 'web, Android and iPhone',
-        authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
         api: 'https://www.googleapis.com/drive/v3',
         upload: 'https://www.googleapis.com/upload/drive/v3',
         scope: 'https://www.googleapis.com/auth/drive.appdata',
         configured: () => !!(cfg().google && cfg().google.clientId),
         available: () => true,
-        async authorizeUrl({ state, reconnect, loginHint }) {
-            return { url: `${this.authUrl}?${qs({
-                client_id: cfg().google.clientId, redirect_uri: redirectUri(), response_type: 'token',
-                scope: this.scope, state, include_granted_scopes: 'false',
-                prompt: reconnect ? undefined : 'select_account', login_hint: loginHint
-            })}` };
+        // Called synchronously from a click so the browser allows Google's dialog.
+        requestToken({ reconnect, loginHint }) {
+            const oauth = root.google && root.google.accounts && root.google.accounts.oauth2;
+            if (!oauth) {
+                loadGoogleIdentity();
+                throw new SyncError('auth', 'Google sign-in is still loading or could not load. Check your connection, then tap Connect or Reconnect again.');
+            }
+            return new Promise((resolve, reject) => {
+                const client = oauth.initTokenClient({
+                    client_id: cfg().google.clientId,
+                    scope: this.scope,
+                    include_granted_scopes: false,
+                    callback: response => {
+                        if (response.error) {
+                            reject(new SyncError('denied', 'Google access was not granted. Try connecting again and allow app data access.'));
+                            return;
+                        }
+                        resolve({ provider: 'google', reconnect, params: new URLSearchParams(response) });
+                    },
+                    error_callback: error => reject(new SyncError('auth', error.type === 'popup_closed'
+                        ? 'Google sign-in was closed. Your data is still saved on this device.'
+                        : 'Google sign-in could not open. Allow pop-ups for this app, then tap Connect or Reconnect again.'))
+                });
+                client.requestAccessToken({ prompt: reconnect ? '' : 'select_account', ...(loginHint ? { login_hint: loginHint } : {}) });
+            });
         },
         async finish(params) {
             const token = params.get('access_token');
@@ -541,11 +560,24 @@
         return Object.values(DEFS).map(d => ({ id: d.id, name: d.name, platforms: d.platforms, configured: d.configured(), available: d.available(), native: !!d.native }));
     }
 
-    /** Starts sign-in. Browser providers leave the page and come back via oauth-callback.html. */
+    // Load only when Google is configured; never cache the Google-hosted library.
+    let googleScript = null;
+    function loadGoogleIdentity() {
+        if (!root.document || googleScript || (root.google && root.google.accounts)) return;
+        googleScript = root.document.createElement('script');
+        googleScript.src = 'https://accounts.google.com/gsi/client';
+        googleScript.async = true;
+        googleScript.onerror = () => { googleScript.remove(); googleScript = null; };
+        root.document.head.appendChild(googleScript);
+    }
+    if (GOOGLE.configured()) loadGoogleIdentity();
+
+    /** Google returns its response directly; other web providers redirect. */
     async function beginConnect(id, { reconnect = false, loginHint } = {}) {
         const def = DEFS[id];
         if (!def || !def.configured()) throw new SyncError('config', `${def ? def.name : id} is not set up in this copy of the app.`);
         if (def.native) return { native: true };
+        if (id === 'google') return def.requestToken({ reconnect, loginHint });
         const state = randomString(24);
         const { url, verifier } = await def.authorizeUrl({ state, reconnect, loginHint });
         savePending({ provider: id, state, verifier, reconnect });

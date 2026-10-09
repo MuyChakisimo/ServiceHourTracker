@@ -31,8 +31,8 @@ IDs. Do a real test with each provider (§7) before announcing it.
 
 ## 2. Redirect (callback) URLs
 
-Every provider sends the user back to `oauth-callback.html`, next to `index.html`.
-Register **exactly** these URLs with each provider (no trailing characters):
+OneDrive and Dropbox send the user back to `oauth-callback.html`, next to `index.html`.
+Register **exactly** these URLs with OneDrive and Dropbox (no trailing characters):
 
 | Environment | Redirect URI |
 |---|---|
@@ -42,8 +42,10 @@ Register **exactly** these URLs with each provider (no trailing characters):
 Serve locally with `npx http-server -p 8765 -c-1`. Use the same port you
 registered; `localhost` and `127.0.0.1` are different URLs to the providers.
 
-Sign-in uses a full-page redirect, not a pop-up, because installed PWAs and iOS
-often block pop-ups. The service worker never intercepts `oauth-callback.html`.
+OneDrive and Dropbox use full-page redirects. Google uses the Google Identity
+Services dialog, launched directly from Connect or Reconnect. Allow pop-ups for
+the app when prompted. Test Google sign-in in installed Android and iOS PWAs;
+if the browser blocks the dialog, the app shows an error and keeps local data. The service worker never intercepts `oauth-callback.html`.
 
 ---
 
@@ -52,30 +54,35 @@ often block pop-ups. The service worker never intercepts `oauth-callback.html`.
 Scope: `https://www.googleapis.com/auth/drive.appdata` (a hidden per-app folder;
 the app cannot see the user's other Drive files).
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/) and create a project.
+1. Open [Google Cloud Console](https://console.cloud.google.com/) and create or select a project.
 2. **APIs & Services → Library**: enable **Google Drive API**.
-3. **APIs & Services → OAuth consent screen**:
-   - User type: **External**.
-   - Fill in the app name, support email and privacy policy URL.
-   - Add the scope `.../auth/drive.appdata`.
-   - While the app is in **Testing** mode, add your testers as test users.
-   - Publish the app when ready. Check whether the console lists the scope as needing verification; if it does, complete Google's verification before a public launch.
-4. **APIs & Services → Credentials → Create credentials → OAuth client ID**:
-   - Application type: **Web application**.
-   - Authorized JavaScript origins: `https://muychakisimo.github.io` and `http://localhost:8765`.
-   - Authorized redirect URIs: both URLs from §2.
+3. Open **Google Auth Platform**:
+   - **Branding**: use **Service Hour Tracker**, a support email you monitor, and your developer contact email. An existing email is fine.
+   - Use `https://muychakisimo.github.io/ServiceHourTracker/` as the app homepage. Add a published privacy policy URL before public launch.
+   - **Audience**: choose **External**; start in Testing and add your Google account under Test users.
+   - **Data Access**: add `https://www.googleapis.com/auth/drive.appdata`.
+4. **Clients → Create client → Web application**:
+   - Authorized JavaScript origins: `https://muychakisimo.github.io`, `http://localhost`, and `http://localhost:8765`.
+   - Google does **not** need an authorized redirect URI for this dialog flow.
 5. Copy the **Client ID** (ends in `.apps.googleusercontent.com`) into
    `js/cloud-config.js` → `google.clientId`. **Do not** copy the client secret anywhere.
+6. Bump the service-worker cache version when adding the ID, deploy, and complete the real-device tests in §7. Publish the Google OAuth app when ready for public use; follow any verification requirements shown in the console.
 
-**Limitation.** Browser apps use Google's token flow (`response_type=token`), so
-sign-in lasts about one hour. Changes keep saving on the device and upload after
-the user taps **Reconnect**, which is usually one tap with no password.
+**Browser sign-in.** The app loads Google's hosted Identity Services library only
+when a Google client ID is configured. Connect and Reconnect call
+`google.accounts.oauth2.initTokenClient` / `requestAccessToken` directly from a
+user click. Google returns tokens to an in-page callback; they are never placed
+in a redirect URL or localStorage. Only Drive app-data permission is requested.
+The library and Google APIs are never cached by the service worker.
 
-To keep users signed in, Google requires the authorization-code flow with a
-**client secret**, and that must run on a server. The option would be a tiny
-serverless function (Cloudflare Worker, Vercel or Netlify function) that only
-exchanges codes and refreshes tokens, and stores nothing. It is not included.
-It would be the only server piece, and it would never see tracker data.
+**Limitation.** This server-free token model has short-lived access tokens and no
+refresh token. Sync pauses after expiry; local changes upload after the user taps
+**Reconnect**. It does not provide unattended sync while the app is closed.
+
+The Google authorization-code web flow requires a backend for token exchange.
+It is not implemented here because this app is intended to work without a backend.
+See [Google's browser token model](https://developers.google.com/identity/oauth2/web/guides/use-token-model)
+and [client setup](https://developers.google.com/identity/oauth2/web/guides/get-google-api-clientid).
 
 ---
 

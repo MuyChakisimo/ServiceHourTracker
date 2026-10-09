@@ -21,6 +21,12 @@ const eq = assert.deepStrictEqual;
 let passed = 0, failed = 0;
 
 async function signIn(fake, provider, local) {
+    if (provider === 'google') {
+        globalThis.google = fake.googleIdentity();
+        const result = await P.beginConnect(provider);
+        assert.ok(!localStorage.getItem('stt.oauth.pending'), 'Google must not persist redirect state');
+        return P.completeConnect(local, result);
+    }
     let authUrl;
     globalThis.location.assign = url => { authUrl = url; };
     await P.beginConnect(provider);
@@ -149,6 +155,39 @@ async function device(fake, provider, legacy) {
             eq(Object.keys(A.state().database).length, 5);
             if (provider !== 'onedrive') assert.ok(fake.log.some(l => /revoke/.test(l)));
         });
+        if (provider === 'google') {
+            await t('legacy Google token redirects are rejected', async () => {
+                localStorage.setItem('stt.oauth.pending', JSON.stringify({ provider: 'google', state: 'old-request', at: Date.now() }));
+                localStorage.setItem('stt.oauth.result', JSON.stringify({ hash: '#access_token=legacy&state=old-request' }));
+                assert.ok(/updated/.test(P.takeRedirectResult().error));
+                assert.ok(!localStorage.getItem('stt.oauth.result'));
+            });
+            await t('missing Google library gives a retry message', async () => {
+                delete globalThis.google;
+                await assert.rejects(P.beginConnect('google'), e => e.code === 'auth' && /loading/.test(e.message));
+            });
+            await t('Google dialog failures reject without storing tokens', async () => {
+                for (const type of ['popup_closed', 'popup_failed_to_open']) {
+                    globalThis.google = { accounts: { oauth2: { initTokenClient: config => ({ requestAccessToken: () => config.error_callback({ type }) }) } } };
+                    await assert.rejects(P.beginConnect('google'), e => e.code === 'auth' && (type === 'popup_closed' ? /closed/.test(e.message) : /Allow pop-ups/.test(e.message)));
+                }
+                eq(await A.local.kvGet('providerSession'), undefined);
+            });
+            await t('denied or partial Google consent does not store a session', async () => {
+                for (const response of [{ error: 'access_denied' }, { access_token: 'not-authorized', scope: '', expires_in: 3600 }]) {
+                    globalThis.google = { accounts: { oauth2: { initTokenClient: config => ({ requestAccessToken: () => config.callback(response) }) } } };
+                    await assert.rejects(async () => P.completeConnect(A.local, await P.beginConnect('google')), e => e.code === 'denied');
+                    eq(await A.local.kvGet('providerSession'), undefined);
+                }
+            });
+            await t('Reconnect passes account hint and skips forced account selection', async () => {
+                let config, options;
+                globalThis.google = { accounts: { oauth2: { initTokenClient: c => { config = c; return { requestAccessToken: o => { options = o; c.callback({ error: 'access_denied' }); } }; } } } };
+                await assert.rejects(P.beginConnect('google', { reconnect: true, loginHint: 'person@example.com' }));
+                eq(options, { prompt: '', login_hint: 'person@example.com' });
+                eq(config.include_granted_scopes, false);
+            });
+        }
         await t('state mismatch is rejected', async () => {
             localStorage.setItem('stt.oauth.pending', JSON.stringify({ provider, state: 'expected', at: Date.now() }));
             localStorage.setItem('stt.oauth.result', JSON.stringify({ query: '?code=x&state=evil', hash: '' }));

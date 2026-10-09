@@ -1,5 +1,11 @@
 # Changelog
 
+## 6.0.1 — Google Identity Services
+- Google Connect and Reconnect use Google's supported browser token client instead of legacy token redirects.
+- Preserve the click gesture for Google's dialog; explain blocked/closed dialogs and library loading failures.
+- Load Google's library only when configured, allow its required CSP sources, and keep it out of offline caches.
+- Updated Google Cloud setup instructions and sign-in regression tests. Live account and installed-PWA tests still require an OAuth client ID.
+
 ## 6.0.0 — Optional cloud sync
 - **Account & Sync** (menu):
   - Connect your own Google Drive, OneDrive or Dropbox. It's optional and there's no login on start.

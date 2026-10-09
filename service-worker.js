@@ -5,7 +5,7 @@
  * and, when tapped, tells the worker to take over and reloads. Old caches are
  * removed on activation, so users are never stuck on an outdated version.
  */
-const CACHE_VERSION = 'v6.0.0';
+const CACHE_VERSION = 'v6.0.1';
 const CACHE_NAME = `service-time-tracker-${CACHE_VERSION}`;
 const APP_SHELL = [
     './',

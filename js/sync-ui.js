@@ -233,9 +233,10 @@
         if (!navigator.onLine) { app.showAlert('You’re offline. Connect to the internet to set up cloud sync.'); return; }
         const def = P().DEFS[id];
         try {
-            await local.idle(); // make sure every pending save is written before leaving the page
+            if (id !== 'google') await local.idle(); // redirects must flush saves; Google's dialog needs the click gesture
             const r = await P().beginConnect(id);
-            if (r && r.native) await finishConnect({ provider: id });
+            if (r && r.params) { await local.idle(); await finishConnect(r); }
+            else if (r && r.native) await finishConnect({ provider: id });
         } catch (e) {
             app.showAlert(e.message || `Could not start ${def.name} sign-in.`);
         }
@@ -243,9 +244,10 @@
 
     async function reconnect() {
         const s = engine.status;
-        await local.idle();
         try {
-            await P().beginConnect(s.provider, { reconnect: true, loginHint: s.account && /@/.test(s.account.label || '') ? s.account.label : undefined });
+            if (s.provider !== 'google') await local.idle();
+            const result = await P().beginConnect(s.provider, { reconnect: true, loginHint: s.account && /@/.test(s.account.label || '') ? s.account.label : undefined });
+            if (result && result.params) { await local.idle(); await finishConnect(result); }
         } catch (e) { app.showAlert(e.message); }
     }
 
